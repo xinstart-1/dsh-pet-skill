@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QQ · dsh-pet-qq</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">Q</span>
+        <div>
+          <h1>QQ</h1>
+          <p class="sub">一只宠物替你看着 QQ · 只回你亲手允许的人</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="pill" class="pill pill-off" title="网关连接状态">未连接</span>
+        <button id="btn-save" class="btn">保存</button>
+        <label class="switch" title="总开关：关掉就断开网关，一条都不回">
+          <input id="enabled" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="connect">连接</button>
+        <button class="tab" data-tab="chat">聊天</button>
+        <button class="tab" data-tab="permit">权限</button>
+        <button class="tab" data-tab="records">记录</button>
+        <button class="tab" data-tab="help">说明</button>
+      </nav>
+
+      <main class="content">
+        <!-- ============ 连接 ============ -->
+        <section class="panel active" data-panel="connect">
+          <div class="card">
+            <div class="card-head">
+              <h2>网关</h2>
+              <span class="hint">OneBot v11 · 正向 WebSocket</span>
+            </div>
+            <p class="tip">
+              插件<b>只连接</b>，不启动、不注入任何 QQ 进程。你在
+              <b>NapCat</b>（首选，Windows 有一键包）／LLBot（原 LLOneBot）／SnowLuma 里登录一个 <b>小号</b>，把它的正向
+              WebSocket 地址填进来即可。
+            </p>
+            <p class="tip warn">Lagrange.OneBot 已于 2025-10 归档，官方 SignServer 停运——装了也登不进去，不要选。</p>
+
+            <div class="field">
+              <label>WebSocket 地址</label>
+              <input class="input" data-path="gateway.wsUrl" placeholder="ws://127.0.0.1:3001" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label>访问令牌</label>
+              <input
+                class="input"
+                type="password"
+                data-path="gateway.token"
+                placeholder="没设就留空（已保存的留空表示不改）"
+                autocomplete="off"
+              />
+              <span class="hint" id="token-hint"></span>
+            </div>
+            <div class="field">
+              <label>HTTP 地址（可选）</label>
+              <input
+                class="input"
+                data-path="gateway.httpUrl"
+                placeholder="http://127.0.0.1:3001，留空则全部走 WS"
+                autocomplete="off"
+              />
+            </div>
+            <div class="field">
+              <label>断线重连间隔（秒）</label>
+              <input
+                class="input"
+                type="number"
+                min="1"
+                max="300"
+                data-path="gateway.reconnectSec"
+                style="max-width: 140px"
+              />
+            </div>
+
+            <div class="row">
+              <button id="btn-connect" class="btn btn-primary">连接</button>
+              <button id="btn-disconnect" class="btn">断开</button>
+              <button id="btn-test" class="btn">测试登录</button>
+              <span class="hint" id="connect-hint"></span>
+            </div>
+            <p class="tip">
+              机器人号与主人号填在下面。机器人号留空时，连上后会采用网关自报的号（只用于显示，不落盘）。
+            </p>
+            <div class="field">
+              <label>机器人 QQ 号</label>
+              <input class="input" data-path="account.selfId" placeholder="例如 10001（用小号）" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label>主人 QQ 号</label>
+              <input class="input" data-path="account.masterId" placeholder="你自己的号：私聊必回" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>一键装网关</h2>
+              <span class="hint" id="napcat-version"></span>
+            </div>
+            <p class="tip">
+              插件里已经带了 NapCat 官方安装器（<b>只带安装器，不带 QQ 客户端</b>——那份由安装器从腾讯官方渠道下载）。
+              点「解压安装器」后运行里面的 <b>NapCatInstaller.exe</b>，安装目录请填下面这个路径；
+              装完点「写入配置」，端口、消息格式和令牌会自动配好并回填到上面，你不用手抄。
+            </p>
+            <div class="kv" id="napcat-kv"></div>
+            <div class="row">
+              <button id="btn-napcat-unpack" class="btn">解压安装器</button>
+              <button id="btn-napcat-config" class="btn">写入配置</button>
+              <button id="btn-napcat-launch" class="btn btn-primary">启动网关</button>
+              <button id="btn-napcat-stop" class="btn">停止</button>
+              <span class="hint" id="napcat-hint"></span>
+            </div>
+            <p class="tip warn" id="napcat-warn">
+              安装器是图形界面：选目录、下载 QQ 内核、扫码登录这三步必须你自己点，插件替代不了。
+              装好后用<b>小号</b>扫码，别用日常号。
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>现在什么情况</h2>
+              <span class="hint" id="state-at"></span>
+            </div>
+            <div class="kv" id="state-kv"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>手动发一句</h2></div>
+            <p class="tip">
+              这是<b>你自己的操作</b>，不走白名单、不看试运行开关——人工路径与服务路径分开，和抖音那边一致。
+            </p>
+            <div class="row">
+              <select class="input" id="say-kind" style="max-width: 120px">
+                <option value="private">私聊</option>
+                <option value="group">群聊</option>
+              </select>
+              <input class="input" id="say-to" placeholder="QQ 号 / 群号" style="max-width: 180px" autocomplete="off" />
+              <input class="input" id="say-text" placeholder="要发的内容" autocomplete="off" />
+              <button class="btn btn-primary" id="say-send">发送</button>
+            </div>
+            <span class="hint" id="say-hint"></span>
+          </div>
+        </section>
+
+        <!-- ============ 聊天 ============ -->
+        <section class="panel" data-panel="chat">
+          <div class="card">
+            <div class="card-head"><h2>回不回</h2></div>
+            <p class="tip">
+              <b>试运行</b>打开时，照常生成回复、写审计，但一条都不发。第一次接上网关先跑这个：
+              看看它打算怎么说话，比直接上线安全得多。
+            </p>
+            <div class="row wrap">
+              <label class="check"><input type="checkbox" data-path="chat.dryRun" /> 试运行（只生成不发送）</label>
+              <label class="check"><input type="checkbox" data-path="chat.privateEnabled" /> 私聊自动回复</label>
+              <label class="check"><input type="checkbox" data-path="chat.groupAtOnly" /> 群聊只在被叫到时回</label>
+              <label class="check"><input type="checkbox" data-path="chat.masterAlwaysReply" /> 主人私聊必回</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>怎么回</h2></div>
+            <div class="row wrap">
+              <label class="check"><input type="checkbox" data-path="chat.quoteInGroup" /> 群聊回复时引用原消息</label>
+              <label class="check"><input type="checkbox" data-path="chat.splitReply" /> 长回复拆成几条</label>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>上下文轮数</label>
+                <input class="input" type="number" min="0" max="40" data-path="chat.historyTurns" />
+                <span class="hint">越大越连贯，也越容易被旧语气带偏；0 = 只回这一句</span>
+              </div>
+              <div class="field">
+                <label>静默时段</label>
+                <input
+                  class="input"
+                  data-path="chat.quietHours"
+                  placeholder="23:30-08:00，留空不设"
+                  autocomplete="off"
+                />
+                <span class="hint">这段时间一条都不回（主人私聊也不回）</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>回复前等待（毫秒）</label>
+              <div class="row">
+                <input
+                  class="input"
+                  type="number"
+                  min="0"
+                  max="60000"
+                  data-range="chat.delayMs"
+                  data-index="0"
+                  style="max-width: 120px"
+                />
+                <span class="hint">到</span>
+                <input
+                  class="input"
+                  type="number"
+                  min="0"
+                  max="60000"
+                  data-range="chat.delayMs"
+                  data-index="1"
+                  style="max-width: 120px"
+                />
+                <span class="hint">之间随机等一下——秒回很像机器人</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>群里叫这些名字也算叫它</h2></div>
+            <p class="tip">群里不一定有人会 @，叫一声名字也要能接话。两个字以上才生效，空 = 只认 @。</p>
+            <div class="chips" data-list="chat.mentionNames" data-placeholder="例如：大肥鱼 / 小鲸鱼，回车添加"></div>
+          </div>
+        </section>
+
+        <!-- ============ 权限 ============ -->
+        <section class="panel" data-panel="permit">
+          <div class="card">
+            <div class="card-head">
+              <h2>白名单</h2>
+              <span class="hint">私聊填 QQ 号，群聊填群号</span>
+            </div>
+            <p class="tip">
+              <b>空着就谁都不回</b>（主人私聊除外，见「主人私聊必回」）。群聊要求群号在这张表里， 并且有人 @
+              了它或叫了名字——被拉进陌生群时，@ 一下不足以让它开口。
+            </p>
+            <div class="chips" data-list="chat.allowlist" data-placeholder="QQ 号或群号，回车添加"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>黑名单</h2></div>
+            <p class="tip">这里面的号（或群）无论白名单怎么写都永不回复。</p>
+            <div class="chips" data-list="chat.blocklist" data-placeholder="QQ 号或群号，回车添加"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>熟人名单</h2>
+              <span class="hint">只影响语气，不改人设</span>
+            </div>
+            <p class="tip">
+              <code>QQ号 | 关系 | 备注</code>（后两栏可省）。它不写进人设，只在每次回话前告诉模型
+              「现在跟谁说话」——写进人设就成了同一个人有两套性格。
+            </p>
+            <div class="chips" data-list="chat.knownPeers" data-placeholder="10001 | 同事 | 爱聊游戏"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>闸门</h2></div>
+            <div class="grid3">
+              <div class="field">
+                <label>每小时 / 每个会话</label>
+                <input class="input" type="number" min="1" max="500" data-path="chat.maxPerHourPerPeer" />
+              </div>
+              <div class="field">
+                <label>每天总量</label>
+                <input class="input" type="number" min="1" max="5000" data-path="chat.maxPerDay" />
+              </div>
+              <div class="field">
+                <label>两条之间至少（秒）</label>
+                <input class="input" type="number" min="0" max="3600" data-path="chat.minGapSec" />
+              </div>
+            </div>
+            <div class="row wrap">
+              <label class="check"><input type="checkbox" data-path="behavior.recordAudit" /> 写审计</label>
+              <label class="check"><input type="checkbox" data-path="behavior.logMessages" /> 日志里记消息正文</label>
+            </div>
+            <div class="row wrap">
+              <label class="check"><input type="checkbox" data-path="pet.bubble" /> 桌宠气泡播报回复</label>
+              <label class="check"><input type="checkbox" data-path="pet.workStatus" /> 复用桌宠工作状态</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 记录 ============ -->
+        <section class="panel" data-panel="records">
+          <div class="card">
+            <div class="card-head">
+              <h2>最近回了什么</h2>
+              <button class="btn btn-sm" id="btn-audit">刷新</button>
+            </div>
+            <div id="audit-list" class="list"><div class="empty">还没有记录。</div></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <h2>日志</h2>
+              <button class="btn btn-sm" id="btn-logs">刷新</button>
+            </div>
+            <pre id="log-box" class="logbox">还没有日志。</pre>
+          </div>
+        </section>
+
+        <!-- ============ 说明 ============ -->
+        <section class="panel" data-panel="help">
+          <div class="card">
+            <div class="card-head"><h2>它是怎么工作的</h2></div>
+            <pre class="diagram">QQ ⇄ 网关（OneBot v11）⇄ 本插件 ⇄ 宿主 LLM</pre>
+            <p class="tip">
+              消息从网关推过来 → 过闸门（开关 / 黑名单 / 白名单 / 静默时段 / 频率）→ 借宠物的人设 → 由宿主的大模型写一句
+              → 发回去。模型不由本插件配置，用的是 harness 里那个默认模型。
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>风险，说在前面</h2></div>
+            <ul class="bullets">
+              <li>网关是第三方程序，登录机器人号有<b>被风控 / 封号</b>的可能。用小号，别用主号。</li>
+              <li>本插件<b>不下载、不启动、不注入</b>任何 QQ 客户端，也不替你同意任何协议。</li>
+              <li>没有批量发送、没有群发、没有好友申请——一个无鉴权的本地端口不该有那种能力。</li>
+              <li>默认总开关关、试运行开。你不手动打开，一句话都不会发出去。</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>装一个网关</h2></div>
+            <ol class="steps">
+              <li>
+                装网关：用上面「<b>一键装网关</b>」那块最省事（解压安装器 → 跑一次安装器 →
+                写入配置）。不想用内置安装器的话，自己下载也行：<b>首选 NapCat</b>（Windows 一键包，默认 WS 端口
+                3001），也可 LLBot、SnowLuma。Lagrange 已归档，不要选。
+              </li>
+              <li>用它登录你准备的 QQ 小号（扫码）。</li>
+              <li>
+                在它的设置里打开<b>正向 WebSocket</b>——NapCat 里是建一个「<b>WebSocket 服务器</b>」，不是「WebSocket
+                客户端」（配反了它会主动来连你，插件永远等不到连接）。记下端口（默认 3001），设一个令牌。
+              </li>
+              <li>回到「连接」页填地址与令牌 → 保存 → 连接 → 看登录号对不对。</li>
+              <li>先在「聊天」页开着试运行发一条私聊，确认回复的样子，再关掉试运行。</li>
+            </ol>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

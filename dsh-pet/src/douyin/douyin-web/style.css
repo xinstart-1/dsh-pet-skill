@@ -1,0 +1,955 @@
+/**
+ * 设置页样式：浅色、克制、卡片化。
+ * 抖音红只留给关键动作与状态；授权这类"要你亲手做一步"的区域用青色描边区分。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --accent: #fe2c55;
+  --accent-soft: #ffe8ee;
+  --cyan: #0fb9b1;
+  --ink: #14161a;
+  --ink-2: #3d434d;
+  --ink-3: #6b7280;
+  --line: #e6e8ee;
+  --bg: #f5f6f9;
+  --card: #ffffff;
+  --ok: #0f9d58;
+  --warn: #b7791f;
+  --err: #d92d20;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(20, 22, 26, 0.04), 0 8px 24px rgba(20, 22, 26, 0.05);
+}
+
+/* 不写死 html/body 的高度：内容比视口高时要让 body 自然长高。
+   写死 height:100% 时 .layout 会被限制在视口高度、内容溢出却不计入 scrollHeight，
+   结果内嵌模式（?embed=1）上报的高度偏小 → iframe 太矮 → 页面底部被裁（"最后一排点不到"）。 */
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+h1 {
+  font-size: 17px;
+}
+
+h2 {
+  font-size: 14.5px;
+}
+
+code {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px;
+  background: #f1f2f6;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 22px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  background: linear-gradient(135deg, #fe2c55 0%, #ff6a86 55%, #25f4ee 130%);
+  box-shadow: 0 4px 12px rgba(254, 44, 85, 0.28);
+}
+
+.sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- 布局 ---------- */
+.layout {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 10px;
+  width: 118px;
+  flex: none;
+  border-right: 1px solid var(--line);
+  background: var(--card);
+  position: sticky;
+  top: 67px;
+  align-self: flex-start;
+  max-height: calc(100vh - 67px);
+  overflow: auto;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 9px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover {
+  background: #f4f5f8;
+}
+
+.tab.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  padding: 20px 24px 90px;
+  max-width: 1060px;
+  min-width: 0;
+}
+
+.panel {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel.active {
+  display: flex;
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- 表单 ---------- */
+.field {
+  margin-bottom: 14px;
+}
+
+.field > label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+  font-weight: 550;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0 18px;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fcfcfd;
+  border-radius: 9px;
+  padding: 9px 11px;
+  font: inherit;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.1);
+  background: #fff;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.55;
+}
+
+.mono {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.check input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tip {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.row .input {
+  flex: 1;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(254, 44, 85, 0.22);
+}
+
+.btn-primary:hover {
+  background: #e8204b;
+}
+
+.btn-ghost {
+  background: #fff;
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+
+.btn-ghost:hover {
+  border-color: #cfd3db;
+  background: #fafbfc;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- 状态 ---------- */
+.pill {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.pill-on {
+  background: #e6f6ec;
+  color: var(--ok);
+}
+
+.pill-off {
+  background: #f1f2f6;
+  color: var(--ink-3);
+}
+
+.pill-warn {
+  background: #fdf3e3;
+  color: var(--warn);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px 20px;
+}
+
+.kv .item {
+  font-size: 13px;
+  color: var(--ink-2);
+  display: flex;
+  gap: 8px;
+}
+
+.kv .item b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.kv .item b.ok {
+  color: var(--ok);
+}
+
+.kv .item b.bad {
+  color: var(--err);
+}
+
+.empty {
+  color: var(--ink-3);
+  font-size: 13px;
+  padding: 8px 0;
+  line-height: 1.7;
+}
+
+.preview {
+  margin: 0;
+  background: #fbfbfd;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.preview.small {
+  font-size: 12px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+/* ---------- 账号卡 ---------- */
+.account {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #eceef3 center/cover no-repeat;
+  flex: none;
+  border: 1px solid var(--line);
+}
+
+.account-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-name {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.account-meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  word-break: break-all;
+}
+
+/* ---------- 授牌表 ---------- */
+.grants-wrap {
+  overflow-x: auto;
+}
+
+.grants-wrap table.grants {
+  min-width: 880px;
+}
+
+.input.tiny {
+  width: 58px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+label.q {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 6px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+td.quota .hint {
+  margin-top: 4px;
+}
+
+table.grants {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table.grants th,
+table.grants td {
+  text-align: left;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+
+table.grants th {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+table.grants td.pet {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+table.grants .cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 14px;
+  white-space: nowrap;
+}
+
+.tag {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f2f6;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.tag.on {
+  background: #e6f6ec;
+  color: var(--ok);
+}
+
+.tag.off {
+  background: #f3f4f6;
+  color: var(--ink-3);
+}
+
+.tag.expired {
+  background: #fdeceb;
+  color: var(--err);
+}
+
+/* ---------- 作品列表 ---------- */
+.videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.video {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.video .cover {
+  aspect-ratio: 9 / 16;
+  background: #eef0f4 center/cover no-repeat;
+}
+
+.video .body {
+  padding: 9px 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.video .title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
+}
+
+.video .stat {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+table.audit {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+table.audit th,
+table.audit td {
+  text-align: left;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+table.audit th {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+/* ---------- 保存条 / toast ---------- */
+.savebar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 22px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  z-index: 30;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  transform: translate(-50%, 20px);
+  background: #14161a;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: min(580px, 88vw);
+  z-index: 40;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  line-height: 1.55;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast.err {
+  background: #b42318;
+}
+
+.toast.ok {
+  background: #0f7b4d;
+}
+
+@media (max-width: 760px) {
+  .layout {
+    flex-direction: column;
+  }
+  .tabs {
+    flex-direction: row;
+    width: auto;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    position: static;
+    max-height: none;
+    padding: 10px 12px;
+  }
+  .content {
+    padding: 14px 14px 96px;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* ---------- 合并后新增：概览卡 / chips / 发布包列表 ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.stat .k {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+
+.stat .v {
+  font-size: 16px;
+  font-weight: 650;
+  word-break: break-all;
+}
+
+.stat .v.sm {
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.stat.ok .v {
+  color: var(--ok);
+}
+
+.stat.warn .v {
+  color: var(--warn);
+}
+
+.stat.err .v {
+  color: var(--err);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: #fcfcfd;
+  border-radius: 9px;
+  padding: 7px 8px;
+  min-height: 40px;
+}
+
+.chips:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.1);
+  background: #fff;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f2f6;
+  border-radius: 999px;
+  padding: 2px 8px 2px 10px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.chip button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.chip button:hover {
+  color: var(--accent);
+}
+
+.chips input {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  flex: 1;
+  min-width: 90px;
+  padding: 3px 2px;
+  outline: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-card {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.item-title {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.item-meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+.item-body {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fbfbfd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+}
+
+.tag.packed {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+table.cand {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+table.cand th,
+table.cand td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+table.cand th {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+table.cand td.name {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+}
+
+/* ===== 内嵌模式（?embed=1）：嵌进宠物设置页时融进去 =====
+   只在这里覆盖，不动上面的任何规则——直接用新标签打开时仍然是完整整页。
+   目标：让用户看不出"这是另一个应用"，而是宠物设置里的一块内容。 */
+body.embed {
+  background: transparent;
+  /* 内嵌时保存栏是 fixed，贴在 iframe 底部；iframe 高度又等于 body.scrollHeight，
+     所以必须在 body 末尾留出它的高度，否则最后一行会被压在保存栏底下（实测盖住 26px）。 */
+  padding-bottom: 76px;
+}
+
+/* 顶栏压成一条状态行：品牌区（logo + 大标题 + 副标题）是"另一个应用"的信号，去掉 */
+body.embed .topbar {
+  position: static;
+  padding: 0 0 14px;
+  background: transparent;
+  border-bottom: 0;
+}
+body.embed .brand {
+  display: none;
+}
+body.embed .topbar-actions {
+  margin-left: auto;
+}
+
+/* 布局从"左栏 + 内容"改成单列 */
+body.embed .layout {
+  display: block;
+}
+
+/* 左侧竖排页签 → 顶部横向分段 */
+body.embed .tabs {
+  flex-direction: row;
+  width: auto;
+  position: static;
+  max-height: none;
+  padding: 0 0 12px;
+  gap: 6px;
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  overflow-x: auto;
+}
+body.embed .tabs .tab {
+  flex: none;
+}
+
+body.embed .content {
+  padding: 14px 0 8px;
+  max-width: none;
+}
+
+/* 嵌进宠物设置后，顶栏节奏放松一点，别挤着页签 */
+body.embed .topbar {
+  padding-bottom: 16px;
+}
+body.embed .tabs {
+  padding-bottom: 14px;
+}
+
+/* 「立即出个发布包」是这一页的主操作，但在宠物设置里它是"某块内容里的动作"，
+   红色实心会抢走整个设置页的注意力，降成普通按钮 */
+body.embed .topbar-actions .btn-primary {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* ===== 视觉对齐宠物设置页 =====
+   桌宠那边（`.dsh-pet-cfg__card`）是"透明底 + 细边框 + 12px 圆角 + 无阴影 + 12/14 内边距"，
+   抖音这边原本是"白底 + 阴影 + 14px + 18/20"——两套语言并排就很明显不是一家。 */
+body.embed .card {
+  background: transparent;
+  border: 1px solid rgba(127, 127, 127, 0.26);
+  border-radius: 12px;
+  box-shadow: none;
+  padding: 12px 14px;
+}
+body.embed .card-head h2 {
+  font-size: 13px;
+  font-weight: 500;
+}
+/* 卡片间距也收紧到桌宠那边的节奏 */
+body.embed .panel {
+  gap: 12px;
+}
+
+/* 深色兜底：DSH 的主题选择在父页面，iframe 读不到它的 CSS 变量，
+   这里至少跟上系统偏好，别让深色用户看到一块刺眼的白板。 */
+@media (prefers-color-scheme: dark) {
+  body.embed {
+    --ink: #e8eaee;
+    --ink-2: #c2c8d2;
+    --ink-3: #98a1ae;
+    --line: rgba(255, 255, 255, 0.16);
+    --card: transparent;
+    --bg: transparent;
+  }
+  body.embed .card {
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
