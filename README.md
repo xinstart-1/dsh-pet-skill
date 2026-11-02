@@ -1,4 +1,4 @@
-# dsh-pet 🐾
+# dsh-pet-skills 🐾
 
 <p align="center">
   <a href="https://github.com/xinstart-1/dsh-pet-skills"><img alt="stars" src="https://img.shields.io/github/stars/xinstart-1/dsh-pet-skills?style=social"></a>
@@ -7,10 +7,15 @@
   <a href="https://github.com/xinstart-1/dsh-pet-skills"><img alt="repo size" src="https://img.shields.io/github/repo-size/xinstart-1/dsh-pet-skills"></a>
   <a href="https://github.com/xinstart-1/dsh-pet-skills/issues"><img alt="issues" src="https://img.shields.io/github/issues/xinstart-1/dsh-pet-skills"></a>
   <img alt="platform" src="https://img.shields.io/badge/platform-DeepSeek%20Harness%20Web-8A2BE2">
-  <img alt="assets" src="https://img.shields.io/badge/assets-dynamic%20animations-ff69b4">
+  <img alt="skills" src="https://img.shields.io/badge/skills-%E6%8A%96%E9%9F%B3%20%2B%20QQ-ff69b4">
 </p>
 
 一只住在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 里的桌面宠物：待机呼吸、随机动作（打瞌睡、玩魔方、吃火锅……）、左右转向、屏幕漫游、点击 Q 弹、拖拽甩抛反弹、右键菜单点播——一百余个透明动画随时无缝衔接；还能跟随 DSH 会话事件切换工作状态动画、按档位播放余额动画 + 头顶气泡、碎碎念与对话聊天、窗口失焦时弹系统通知。可多开同屏，能脱离浏览器住上**桌面**（透明置顶小窗），也能自己添加**全新宠物种类**（pet pack）。
+
+**宠物带一双手**——内置两个可选技能，让宠物替你接管软件账号（全部默认关闭，开关在设置页，谁也别想背着主人发消息）：
+
+- **抖音技能**：扫码授权后，宠物可以浏览推荐流并汇报看到什么、生成分享卡、把私信草稿写好等你过目（官方对个人号没有发送接口，插件如实做草稿 + 唤起 App，不假装能发）；自动回复可在后台监听打开的会话、由大模型现写回复（试运行模式先跑通再上线）；还能把素材目录扫成竖版**发布包**（转码、文案、封面、节奏闸门一条链，产出一个人能直接双击打开的文件夹）。所有宠物发起的动作都过**授牌闸门**——每只宠物单独授权浏览/分享/私信/发布，全程审计可查。
+- **QQ 技能**：接任何 OneBot v11 网关（NapCat / LLBot / SnowLuma，插件只连接、不碰你的 QQ 进程，网关自己装自己登录），私聊群聊自动回复。回复前过七道闸：总开关 → 黑白名单 → 静默时段 → 主人身份 → 频率配额，长回复拆条、群聊引用接话、回复前随机延迟——不像机器人。主人私聊必回，试运行模式生成但从不发送。
 
 这不是一个普通插件，而是**完整的三件套项目**：
 
@@ -118,6 +123,8 @@ dsh plugin --profile web add file:D:/path/to/dsh-pet/dsh-pet
 - **pet pack（额外宠物种类）**：`pet/` 下建 `种类名-config.json` + `种类名-animation/` 即新增独立动画池与素材的全新种类，多实例共享素材（见 [CONFIG.md](CONFIG.md) 的「方式四」）
 - **自定义动画**：往 `main-animation/webm/` 放 VP9-Alpha 的 `.webm` 即为新动画，优先于包内素材
 - **无障碍**：支持 `prefers-reduced-motion`（减少动效时跳过 Q 弹挤压与淡入切换）
+- **抖音技能（可选，默认关）**：扫码授权 → 浏览推荐流播报 / 分享卡 / 私信草稿（个人号无发送接口，如实做草稿+唤起 App）/ 自动回复（后台监听会话，大模型现写，先试运行）→ 素材目录扫成竖版发布包（转码、文案、节奏闸门）。宠物侧动作全过授牌闸门 + 审计，设置入口：桌宠配置 → 抖音
+- **QQ 技能（可选，默认关）**：接 OneBot v11 网关（NapCat / LLBot / SnowLuma；只连接不碰 QQ 进程），私聊群聊自动回复，七道闸（开关/黑白名单/静默时段/主人身份/频率配额），拆条 + 引用接话 + 随机延迟，试运行模式从不发送，设置入口：桌宠配置 → QQ
 
 ## 🔌 对外接口（供其他插件调用）
 
