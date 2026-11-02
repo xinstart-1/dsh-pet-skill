@@ -72,8 +72,8 @@
     "assets/pic",
     "assets/memes",
     "assets/sound",
-    "assets/config.jsonc",
     "assets/napcat",
+    "assets/config.jsonc",
     "assets/logo.png",
     "scripts/ensure-electron.mjs",
     "cordis.patch.yml"

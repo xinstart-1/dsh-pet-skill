@@ -49,7 +49,7 @@ describe('burnImage', () => {
 
   test('没有删除方法 → 退回 imageHostPath + unlink', () => {
     const unlinked: string[] = [];
-    const { sink } = makeSink({ imageHostPath: (ref: PetImageRef) => 'C:/tmp/att-1' });
+    const { sink } = makeSink({ imageHostPath: () => 'C:/tmp/att-1' });
     const out = burnImage(sink, REF, (p) => unlinked.push(p));
     assert.deepEqual(out, { burned: true, how: 'unlink', detail: 'C:/tmp/att-1' });
     assert.deepEqual(unlinked, ['C:/tmp/att-1']);

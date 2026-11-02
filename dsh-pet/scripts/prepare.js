@@ -58,6 +58,9 @@ const keep = [
   'assets/memes',
   // 点击音效：宿主半侧的 /sound 路由只读包内这一份，漏掉则点击静音；同 memes，必须加在本数组。
   'assets/sound',
+  // QQ 网关一键安装器：src/qq/napcat.js 只从包内 assets/napcat 读 zip/version.json/LICENSE，
+  // 漏掉则「一键装网关」永远报「包内缺少安装器」；同 memes，必须加在本数组。
+  'assets/napcat',
   'assets/config.jsonc',
   // 插件图标：package.json 顶层 icon 指向这张图；缺图时读取方 dsh-app-boot 的 iconOf 会抛错、退回默认插画。
   'assets/logo.png',
