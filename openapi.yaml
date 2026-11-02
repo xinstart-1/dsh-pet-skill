@@ -73,7 +73,7 @@ info:
 
 externalDocs:
   description: 项目仓库与使用说明
-  url: https://github.com/PC2005-cloud/dsh-pet
+  url: https://github.com/xinstart-1/dsh-pet-skills
 
 servers:
   - url: http://127.0.0.1:{port}
@@ -2981,7 +2981,7 @@ components:
                 example: CNY
               total:
                 type: string
-                description: 该币种总余额（字符串，与上游一致；**可能为负数 = 透支**）
+                description: 该币种总余额（字符串，原样透传来源数据；**可能为负数 = 透支**）
                 example: "8.16"
               granted:
                 type: string
@@ -3011,7 +3011,7 @@ components:
               example: 积分
             total:
               type: string
-              description: 当前余额（字符串，与上游一致；不做换算、不重算）
+              description: 当前余额（字符串，原样透传来源数据；不做换算、不重算）
               example: "800"
             full:
               type: string

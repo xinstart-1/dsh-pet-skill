@@ -13,7 +13,7 @@
 2. 设置入口不在「插件」页（那里只有开关），在 **设置（`Ctrl`+`Alt`+`,`）→ 桌宠配置**：宠物列表、显示位置、人设、模型、物理手感、抖音 / QQ 技能都在这里。
 3. 默认 `display: "both"`，想上桌面需要 Electron 运行时：本机没有时插件会**自动下载**一份（约 104MB，走 npmmirror），进度显示在宠物头顶气泡，日志在 `~/.dsh/dsh-pet/logs.txt`。下载失败只影响桌面形态，浏览器里的宠物照常可用。
 
-安装细节与完整文档：**<https://github.com/PC2005-cloud/dsh-pet>**
+安装细节与完整文档：**<https://github.com/xinstart-1/dsh-pet-skills>**
 
 许可：代码 MIT；素材禁止商用；二创在公开渠道须署名（同上链接）。
 
