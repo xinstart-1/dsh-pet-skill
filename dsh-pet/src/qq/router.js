@@ -187,6 +187,30 @@ export function createRouter({ service, log, napcat }) {
         return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
       }
 
+      // 一键装网关：后台静默跑完官方安装器（自动下载 QQ + Shell），不用人守着。
+      case 'POST /napcat/setup': {
+        const r = await napcat.autoInstall();
+        return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
+      }
+
+      // 一键收尾：安装完成后调用——写配置（令牌自动生成回填）→ 启动网关 → 连接。
+      // 扫码登录仍要人来，但其余步骤全部自动。
+      case 'POST /napcat/onekey': {
+        const cfg = service.getConfig();
+        const port = Number(/:(\d{2,5})/.exec(String(cfg.gateway?.wsUrl ?? ''))?.[1] ?? 0) || 3001;
+        const write = await napcat.writeConfig({ port, token: cfg.gateway?.token ?? '' });
+        if (write.ok !== true) return sendJson(res, 409, { ok: false, reason: write.reason, status: await napcat.status() });
+        await service.saveConfig({ gateway: { token: write.token, wsUrl: write.wsUrl } });
+        const launched = await napcat.launch({ uin: String(service.getConfig().account?.selfId ?? '') });
+        // 已在运行不算失败
+        if (launched.ok !== true && launched.already !== true) {
+          return sendJson(res, 409, { ok: false, reason: launched.reason, status: await napcat.status() });
+        }
+        await new Promise((resolve) => setTimeout(resolve, 800)); // 给网关起进程的时间
+        service.connect();
+        return sendJson(res, 200, { ok: true, token: write.token, wsUrl: write.wsUrl, status: await napcat.status() });
+      }
+
       case 'POST /napcat/config': {
         // 端口取插件配置里的 wsUrl（用户可能改成 3010 之类），token 复用已存的
         const cfg = service.getConfig();
@@ -202,6 +226,26 @@ export function createRouter({ service, log, napcat }) {
       case 'POST /napcat/launch': {
         const r = await napcat.launch({ uin: String(service.getConfig().account?.selfId ?? '') });
         return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
+      }
+
+      case 'POST /napcat/fetchlatest': {
+        const r = await napcat.fetchLatest();
+        return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
+      }
+
+      case 'POST /napcat/wipe': {
+        const r = await napcat.wipe();
+        return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
+      }
+
+      // 彻底卸载：清掉本插件在各处落盘的全部用户数据（QQ + 宠物 + 可选 Electron）。
+      // 这个动作由用户在设置页点「彻底卸载并清理」（二次确认）主动触发，不在卸载钩子里自动跑，
+      // 避免误卸载把 QQ 登录态和宠物配置一并抹掉。清完之后插件仍需用户去 DSH 里移除。
+      case 'POST /uninstall': {
+        const { wipeAll } = await import('./uninstall.js');
+        const includeElectron = body?.includeElectron === true;
+        const r = await wipeAll({ includeElectron });
+        return sendJson(res, r.ok ? 200 : 409, r);
       }
 
       case 'POST /napcat/stop': {

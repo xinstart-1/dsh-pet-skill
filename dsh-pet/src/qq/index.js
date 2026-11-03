@@ -85,8 +85,17 @@ export function apply(ctx, deps = {}) {
     return () => {
       disposed = true;
       void service.stop();
-      // 插件卸载/宿主退出时不把我们拉起的网关变成孤儿
-      void napcat.stop().catch(() => {});
+      // 插件移除/禁用/宿主退出时：
+      // 1. 不把我们拉起的网关变成孤儿；
+      // 2. 顺手清掉 napcat/ 目录（安装器 + 已装网关，约 1.2GB，随时可重下）——
+      //    ctx.effect 无法区分「移除」与「禁用」，所以这里只删可再生、无隐私的产物；
+      //    配置与 QQ 登录态不在这里删（那要走设置页「彻底卸载并清理」，见 uninstall.js）。
+      // 用同步版：清理函数返回后 DSH 可能立刻销毁进程，异步删除会被截断、白删。
+      try {
+        napcat.wipeSync();
+      } catch (error) {
+        log.warn(`卸载时清理网关目录失败：${error instanceof Error ? error.message : String(error)}`);
+      }
     };
   }, 'dsh-pet-qq: 初始化与清理');
 

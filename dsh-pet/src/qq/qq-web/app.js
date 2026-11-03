@@ -316,15 +316,112 @@
       ['配置文件', napcat.installed ? esc(napcat.configPath) : '装好后点「写入配置」生成'],
     ];
     host.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-    $('#napcat-version').textContent = napcat.version ? `内置 NapCat ${napcat.version} · 非商业许可` : '';
+    const fromLabel =
+      napcat.zipSource === 'downloaded'
+        ? '已下载最新版'
+        : napcat.zipSource === 'bundle'
+          ? '随包内置'
+          : '无（点「下载最新安装器」）';
+    $('#napcat-version').textContent = napcat.version
+      ? `NapCat ${napcat.version} · ${fromLabel} · 非商业许可`
+      : `安装器来源：${fromLabel}`;
     if (napcat.supported !== true) {
       $('#napcat-warn').textContent =
         '内置安装器只有 Windows 版：这个平台请自己装 NapCat，然后把地址与令牌填到上面的「网关」里。';
     }
     $('#btn-napcat-unpack').disabled = napcat.unpacked === true || napcat.supported !== true;
+    $('#btn-napcat-fetchlatest').disabled =
+      napcat.supported !== true || napcat.unpacked === true || napcat.running === true;
     $('#btn-napcat-config').disabled = napcat.installed !== true;
     $('#btn-napcat-launch').disabled = napcat.installed !== true || napcat.running === true;
     $('#btn-napcat-stop').disabled = napcat.running !== true;
+
+    // 「快速开始」两段按钮的状态随安装进度走：装好前只亮①，装好后②变主按钮
+    const quickSetup = $('#btn-quick-setup');
+    const quickConnect = $('#btn-quick-connect');
+    const quickStatus = $('#quick-status');
+    const quickHint = $('#quick-hint');
+    if (quickSetup && quickConnect && quickStatus && quickHint) {
+      quickSetup.disabled = napcat.supported !== true || napcat.installed === true || napcat.installing === true;
+      quickConnect.disabled = napcat.installed !== true || napcat.running === true || napcat.installing === true;
+      if (napcat.installing === true) {
+        quickHint.textContent = '后台安装中…';
+        quickStatus.textContent = '不用守着，装完会提示';
+      } else if (napcat.running === true) {
+        quickHint.textContent = `网关运行中（pid=${napcat.pid}）`;
+        quickStatus.textContent = '就差扫码登录了——登录后自动连上';
+      } else if (napcat.installed === true) {
+        quickHint.textContent = '网关已安装';
+        quickStatus.textContent = '点 ② 自动写配置并连接';
+      } else if (napcat.installPhase === 'failed') {
+        quickHint.textContent = '上次安装失败';
+        quickStatus.textContent = napcat.installError || '可重试';
+      } else {
+        quickHint.textContent = napcat.supported === true ? '还没安装' : '此平台不支持内置安装器';
+        quickStatus.textContent = '';
+      }
+    }
+    renderInstallProgress();
+  }
+
+  /**
+   * 渲染一键安装的真进度条。
+   *
+   * 数据全部来自安装器自身的输出（后端 GBK 解码后按行解析），所以百分比是真实的，
+   * 不是「轮询了几次」估出来的。安装器要人按键时不会卡住我们——看门狗会兜底。
+   */
+  function renderInstallProgress() {
+    const wrap = $('#install-progress');
+    if (!wrap) return;
+    const running = napcat?.installing === true;
+    const phase = String(napcat?.installPhase ?? 'idle');
+    const percent = Math.max(0, Math.min(100, Number(napcat?.installPercent ?? 0)));
+    // 只在「安装中」或「刚装完/刚失败」时显示；从没装过就不占地方
+    const show = running || phase === 'done' || phase === 'failed';
+    wrap.hidden = !show;
+    if (!show) return;
+
+    $('#install-label').textContent = napcat?.installLabel || (phase === 'done' ? '安装完成' : '准备中');
+    $('#install-percent').textContent = `${percent}%`;
+    const bar = $('#install-bar');
+    bar.style.width = `${percent}%`;
+    bar.className = 'progress-fill' + (phase === 'failed' ? ' is-failed' : phase === 'done' ? ' is-done' : running ? ' is-running' : '');
+    $('#install-detail').textContent = napcat?.installDetail || (phase === 'failed' ? napcat?.installError ?? '' : '');
+    // 已耗时（安装中）/ 总耗时提示
+    const startedAt = Number(napcat?.installStartedAt ?? 0);
+    const elapsed = $('#install-elapsed');
+    if (running && startedAt > 0) {
+      const sec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+      elapsed.textContent = `已用 ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    } else if (phase === 'done') {
+      elapsed.textContent = '完成';
+    } else {
+      elapsed.textContent = '';
+    }
+  }
+
+  /** 拉最新安装器：禁用按钮 → 调用 → 弹提示 → 用返回的状态重画。 */
+  async function fetchLatestAction(btn) {
+    btn.disabled = true;
+    try {
+      const r = await api('/napcat/fetchlatest', { method: 'POST' });
+      if (r.ok === true) {
+        toast(
+          r.already === true
+            ? `已经是最新（v${r.version}）`
+            : `已下载最新安装器 v${r.version}（SHA-256 校验通过）。现在点「解压安装器」`,
+          'ok',
+        );
+      } else {
+        toast(r.reason || '下载失败', 'err');
+      }
+      if (r.status !== undefined) napcat = r.status;
+      else await refreshNapcat();
+      renderNapcat();
+      return r;
+    } finally {
+      renderNapcat();
+    }
   }
 
   /** 拉一次安装器状态 */
@@ -452,6 +549,57 @@
       setTimeout(() => void refresh(), 1200);
     });
 
+    // ---- 快速开始 ①：一键装网关（后台自动：下载 QQ + Shell，不用人守着）----
+    $('#btn-quick-setup').addEventListener('click', async (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      try {
+        const r = await api('/napcat/setup', { method: 'POST' });
+        if (r.ok === true) {
+          toast('后台安装已开始：自动下载 QQ 与 NapCat（几分钟，不用管）', 'ok');
+          if (r.status !== undefined) {
+            napcat = r.status;
+            renderNapcat();
+          }
+          // 轮询安装进度；装完自动提示点②（2 秒一次，进度条才跟得上）
+          const poll = setInterval(async () => {
+            await refreshNapcat();
+            if (napcat?.installing === false && napcat?.installPhase === 'done') {
+              clearInterval(poll);
+              toast('网关安装完成！点「② 一键连接」自动配置并连上', 'ok');
+            } else if (napcat?.installing === false && napcat?.installPhase === 'failed') {
+              clearInterval(poll);
+              toast(napcat?.installError || '安装失败，可重试', 'err');
+            }
+          }, 2000);
+          setTimeout(() => clearInterval(poll), 30 * 60 * 1000);
+        } else {
+          toast(r.reason || '启动后台安装失败', 'err');
+        }
+      } finally {
+        renderNapcat();
+      }
+    });
+
+    // ---- 快速开始 ②：一键连接（写配置 → 启动网关 → 连接，后端一条龙）----
+    $('#btn-quick-connect').addEventListener('click', async (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      try {
+        const r = await api('/napcat/onekey', { method: 'POST' });
+        if (r.ok === true) {
+          toast('已自动写配置、启动网关并发起连接。最后一步：用小号在网关窗口扫码登录，登录后状态变在线', 'ok');
+        } else {
+          toast(r.reason || '一键连接失败', 'err');
+        }
+        if (r.status !== undefined) napcat = r.status;
+        await refreshNapcat();
+        setTimeout(() => void refresh(), 1500);
+      } finally {
+        renderNapcat();
+      }
+    });
+
     $('#btn-disconnect').addEventListener('click', async () => {
       await api('/disconnect', { method: 'POST' });
       toast('已断开', 'ok');
@@ -508,6 +656,35 @@
         ),
     );
 
+    $('#btn-napcat-fetchlatest').addEventListener('click', (event) =>
+      void fetchLatestAction(event.currentTarget),
+    );
+
+    // 彻底卸载并清理：二次确认（先问意图、再复述后果），确认后才调接口删盘
+    $('#btn-uninstall').addEventListener('click', async (event) => {
+      const btn = event.currentTarget;
+      if (!window.confirm('确定要彻底卸载 dsh-pet 并清理全部用户数据吗？\n\n这会删除 QQ 网关、登录态与宠物配置。')) {
+        return;
+      }
+      if (!window.confirm('最后一次确认：QQ 小号登录态和全部配置将不可恢复。点「确定」立即删除。')) {
+        return;
+      }
+      btn.disabled = true;
+      try {
+        const includeElectron = $('#uninstall-electron').checked === true;
+        const r = await api('/uninstall', { method: 'POST', body: { includeElectron } });
+        if (r.ok === true) {
+          toast(`已清理：${(r.removed || []).join('、') || '无'}。请到 DSH 里移除插件。`, 'ok');
+        } else {
+          const failed = Array.isArray(r.failed) ? r.failed.map((f) => f.path).join('、') : '';
+          toast(`清理未全部完成${failed ? `，失败：${failed}` : ''}`, 'err');
+        }
+        $('#uninstall-hint').textContent = `home=${r.home || ''} · 已删=${(r.removed || []).join(',')}`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     $('#btn-napcat-launch').addEventListener(
       'click',
       (event) =>
@@ -563,6 +740,17 @@
     setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
     }, 5000);
+    // 进度条的「已用时间」要每秒走，不能等 5 秒一次的 refresh；
+    // 安装中同时把 napcat 状态拉快一点（2 秒），百分比才跟得上安装器输出。
+    setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (napcat?.installing === true) {
+        renderInstallProgress();
+        void refreshNapcat();
+      } else if (napcat?.installPhase === 'done' || napcat?.installPhase === 'failed') {
+        renderInstallProgress();
+      }
+    }, 1000);
   }
 
   void boot();
