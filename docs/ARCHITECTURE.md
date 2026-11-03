@@ -144,6 +144,15 @@ QQ ⇄ 网关（OneBot v11：NapCat / SnowLuma / Lagrange，用户自己装、�
   WS 令牌走 `?access_token=`（浏览器 WebSocket 不支持自定义头）。
 - **端到端验证**：`.scratch/qq-e2e.mjs` 起一个手写帧协议的假 OneBot 网关 + 假 LLM，跑真实 service，
   覆盖主人私聊/陌生人/群 @/试运行/账本/身份不符六条链路；`npm run test:qq` 是纯函数单测。
+- **卸载清理两条路径**（`uninstall.js`）：
+  1. **插件页直接删插件** → 走 Cordis `ctx.effect`。**关键约束：`ctx.effect` 在「移除」与「禁用」时都会触发，无法区分**，
+     所以这里只清**可再生、无隐私**的 `dsh-pet-qq/napcat/`（网关安装器 + 已装网关，约 1.2GB，可重下），
+     且用 `wipeSync()`/`wipeDirSync()` **同步删**——清理函数返回后 DSH 可能立刻销毁进程，异步 `rm` 会被截断、白删。
+     配置与 QQ 登录态**不**在这里删。
+  2. **设置页「彻底卸载并清理」**（二次确认）→ `wipeAll()` 全清：`dsh-pet-qq`（网关、登录态、配置）、
+     `dsh-pet`（宠物配置与素材）、可选 `electron`（约 104MB 可重下）。
+  - 刻意**不**在卸载钩子里全删：禁用一下就会丢配置与 QQ 登录态，且不可恢复。删盘是用户主动确认的动作。
+  - `wipeDir`/`wipeDirSync` 只删明确列出的目录、绝不碰 `DSH_HOME` 本身或其他插件，带 Windows 文件锁重试。
 
 ## 为什么不追上游了（fork 声明）
 

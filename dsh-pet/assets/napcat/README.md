@@ -47,3 +47,15 @@ NapCat 使用它自己的 **Limited Redistribution License**（全文见同目�
 ```bash
 sha256sum assets/napcat/NapCat.Shell.Windows.OneKey.zip
 ```
+
+### 用户侧的「下载最新安装器」
+
+插件设置页（QQ → 一键装网关）除随包内置安装器外，还提供一个
+**「下载最新安装器」**按钮：点它会从 GitHub `releases/latest` 拉取最新版
+`NapCat.Shell.Windows.OneKey.zip`，**边下边校验 SHA-256**（取 GitHub 资产自带的
+`digest` 字段，base64 解码后与本地逐块计算的哈希比对），校验通过才落盘到用户数据目录
+（`<数据目录>/napcat/`，Windows 下即 `%APPDATA%` 同级的 napcat 目录），并写入
+`napcat-version.json`；校验不通过的包直接丢弃、绝不落盘。下载的版本会成为解压时的
+**优先来源**（高于随包内置），状态里会标注来源是「已下载最新版」还是「随包内置」。
+
+这样即使随包那份安装器过期或解压失败，用户也能在不碰 git、不重装插件的前提下拿到最新版。

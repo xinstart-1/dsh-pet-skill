@@ -28,3 +28,44 @@
 用于 QQ 技能页的「一键装网关」。它**只含安装器，不含 QQ 客户端**——腾讯 QQ 是专有软件，由安装器在你的机器上
 从官方渠道下载。NapCat 使用它自己的 Limited Redistribution License（允许再分发、禁止商用），
 全文见 `assets/napcat/LICENSE-NapCat.txt`，来源与校验值见 `assets/napcat/README.md`。
+
+随包这份可能过期；QQ 设置页另提供「**下载最新安装器**」按钮，从 GitHub `releases/latest`
+拉最新版并校验 SHA-256 后落到用户数据目录（优先级高于随包内置），免重装即可更新。
+
+## 卸载清理
+
+**推荐的卸载顺序：先在 QQ 设置页「说明 → 卸载与清理」点「彻底卸载并清理」，再去 DSH 插件页移除插件。**
+
+- 那个按钮（二次确认）会删除 `%DSH_HOME%/dsh-pet-qq`（QQ 网关、**登录态**、配置）、
+  `%DSH_HOME%/dsh-pet`（宠物配置与素材），并可选删除 `%DSH_HOME%/electron`（约 104MB 运行时，可重下）。
+
+**直接在 DSH 插件页删了插件（没点上面的按钮）会怎样：**
+
+| 内容 | 是否自动清掉 |
+| --- | --- |
+| `dsh-pet-qq/napcat/`（安装器 + NapCat Shell + **QQ 客户端本体**，装好后约 1.2GB，可重下） | ✅ 卸载时自动同步清掉 |
+| 其他插件目录、`%DSH_HOME%` 本身 | 不碰 |
+| `dsh-pet-qq/` 的配置与 **QQ 登录态**、`dsh-pet/` 配置与素材 | ❌ 会残留，需手动删 |
+
+> 实测说明：NapCat 的 OneKey 安装器是把 QQ 客户端**解压进 Shell 目录**（`napcat/app/NapCat.*.Shell/`，约 1.2GB），
+> 不是装到 `C:\Program Files\Tencent\QQNT`。所以「删插件 → 自动清 `napcat/`」会把这份 QQ 一起清掉，
+> 不会在系统里留一个陌生 QQ。你日常用的 QQ 是另外装的，不受影响。
+
+**QQ 客户端本体（NTQQ）不归插件管**：它由安装器弹出的 QQ 安装界面装到用户自选位置
+（常见 `C:\Program Files\Tencent\QQNT`），插件不读也不删那个位置。想卸 QQ 客户端请走
+Windows「设置 → 应用」的 QQ 卸载入口。
+
+手动兜底（PowerShell）：
+
+```powershell
+Remove-Item -Recurse -Force "$env:USERPROFILE\.dsh\dsh-pet-qq"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.dsh\dsh-pet"
+# 可选：Electron 运行时（约 104MB，下次需要桌面形态时会重下）
+Remove-Item -Recurse -Force "$env:USERPROFILE\.dsh\electron"
+```
+
+> 如果设了 `$env:DSH_HOME`，把上面路径里的 `.dsh` 换成它的值。
+
+**为什么不在卸载钩子里静默全删**：Cordis 的 `ctx.effect` 在「移除插件」和「禁用插件」时**都会触发**，
+两者无法区分。在里面全删等于"禁用一下就丢配置和 QQ 登录态"。所以卸载钩子只清**可再生、无隐私**的
+`napcat/` 网关目录；真删用户数据必须由用户在设置页主动确认。
