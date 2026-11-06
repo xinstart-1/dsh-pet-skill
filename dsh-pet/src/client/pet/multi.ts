@@ -305,16 +305,18 @@ export function createPetMulti(
     }, [ready]);
 
     return ready
-      ? visiblePets.map((p) =>
-          h(Card, {
+      ? visiblePets.map((p) => {
+          // 未启用工作状态联动：在分发处就断掉，下游（动画恢复、播完判定、气泡）不必各判一次。
+          const workOn = p.workStatusEnabled;
+          return h(Card, {
             key: p.id,
             cfg: p as RuntimePet,
             balance,
             balanceTick,
             balanceNoticeTick,
             balanceManual,
-            workStatus,
-            workStatusTick,
+            workStatus: workOn ? workStatus : null,
+            workStatusTick: workOn ? workStatusTick : 0,
             say: sayRef.current[p.id],
             sayTick,
             animCue: animCueRef.current[p.id],
@@ -327,8 +329,8 @@ export function createPetMulti(
             lockTick,
             menuItemsRef,
             arena: arenaRef,
-          }),
-        )
+          });
+        })
       : null;
   };
 }

@@ -75,12 +75,12 @@ describe('derivePetMetrics —— 由宽度推出盒子度量', () => {
 });
 
 describe('petStageStyle —— 舞台位移', () => {
-  test('拖拽中：取消脚垫位移，视频贴指针走', () => {
-    assert.deepEqual(petStageStyle(true, 21.6), { transform: 'none' });
+  test('位移恒定：拖拽中也不取消（取消会让视频相对光标上跳 bottomPad）', () => {
+    assert.deepEqual(petStageStyle(21.6), { transform: 'translateY(21.6px)' });
   });
 
-  test('静止：按脚垫上移，让脚底落在命中框底边', () => {
-    assert.deepEqual(petStageStyle(false, 21.6), { transform: 'translateY(21.6px)' });
+  test('按脚垫上移，让脚底落在命中框底边', () => {
+    assert.deepEqual(petStageStyle(0), { transform: 'translateY(0px)' });
   });
 });
 
