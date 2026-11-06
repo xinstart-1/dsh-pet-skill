@@ -13,7 +13,7 @@ import { getStateSnapshot } from './state-service.ts';
 import { makePetConfigSection, NS, zh, en, petBridge } from './settings.ts';
 import { initNotify } from './notify.ts';
 import { installCommandFaces, type CommandFace, type CommandUiLike } from './command-faces.ts';
-import { installSectionNavIcon } from './nav-icon.ts';
+import { makeSectionNavIcon } from './nav-icon.ts';
 import type * as ReactNS from 'react';
 import type * as PrimitivesNS from '@deepseek-ai/dsh-client-ui-primitives';
 
@@ -27,35 +27,12 @@ export function makeFactory(): (require: (mod: string) => any) => any {
     const { useEffect, useRef, useState, useCallback } = react;
     const { jsx: h } = require('react/jsx-runtime');
 
-    // primitives 是平台种子模块；取不到只影响命令图标，不影响插件加载。
+    // primitives 是平台种子模块；取不到只影响「/」命令行的图标，不影响插件加载。
     let primitives: typeof PrimitivesNS | undefined;
     try {
       primitives = require('@deepseek-ai/dsh-client-ui-primitives');
     } catch (error) {
       console.warn('[dsh-pet] 图标模块不可用：' + (error instanceof Error ? error.message : String(error)));
-    }
-
-    // react-dom 也是平台种子模块，仅用于把图标同步渲成 SVG 供 CSS mask 使用。
-    // 取不到就退化成齿轮图标，不影响插件加载。
-    let renderIconSvg: ((icon: ReactNS.ComponentType<PrimitivesNS.IconProps>) => string) | undefined;
-    try {
-      const { createRoot } = require('react-dom/client');
-      const { flushSync } = require('react-dom');
-      renderIconSvg = (icon) => {
-        const holder = document.createElement('div');
-        const root = createRoot(holder);
-        try {
-          // flushSync：root.render 是异步调度，不同步刷一次拿不到 DOM。
-          flushSync(() => root.render(h(icon, { size: 16 })));
-          return holder.innerHTML;
-        } finally {
-          root.unmount();
-        }
-      };
-    } catch (error) {
-      console.warn(
-        '[dsh-pet] 图标渲染器不可用（react-dom 缺失）：' + (error instanceof Error ? error.message : String(error)),
-      );
     }
 
     // 宠物 overlay 与设置页各自独立成文件，这里只组装和注册。
@@ -146,18 +123,6 @@ export function makeFactory(): (require: (mod: string) => any) => any {
         );
       }, 'dsh-pet: command faces');
 
-      // 设置页导航「桌宠配置」的图标：DSH 只给白名单分区配图标，只能在 DOM 层补。
-      // 依据与降级策略见 nav-icon.ts。
-      ctx.effect(() => {
-        const renderIcon = renderIconSvg;
-        const icon = primitives?.IconSlidersTwoOutlineMedium;
-        if (renderIcon === undefined || icon === undefined) {
-          console.warn('[dsh-pet] 设置页导航图标不可用（那一行仍是齿轮）');
-          return () => {};
-        }
-        return installSectionNavIcon({ label: () => t('nav'), renderSvg: () => renderIcon(icon) });
-      }, 'dsh-pet: settings nav icon');
-
       // 宠物 overlay：容器渲染多个 PetCard。
       ctx.slots.inject('shell.overlay', function* () {
         yield ctx.slots.register({ name: 'shell.overlay', id: 'pet', order: 1000 }, () => h(PetMulti, {}));
@@ -171,6 +136,14 @@ export function makeFactory(): (require: (mod: string) => any) => any {
           { name: 'settings.section', id: 'pet-config', order: 30, label: () => t('nav'), inject: () => ({ t }) },
           PetConfigSection,
         );
+      });
+
+      // 左栏「桌宠配置」的图标：官方 settings.section.icon 槽按行 id 匹配，id 必须与上面那个分区一致。
+      // shell 以 `only: row.id` 过滤，对不上的注册永不渲染——所以这里不能用别的 id 复用。
+      // 槽由设置页外壳声明，插件加载顺序不保证，故走 slots.inject 等声明到位再注册。
+      const SectionNavIcon = makeSectionNavIcon({ h });
+      ctx.slots.inject('settings.section.icon', function* () {
+        yield ctx.slots.register({ name: 'settings.section.icon', id: 'pet-config', order: 30 }, SectionNavIcon);
       });
 
       // 「抖音」不再单开一个分区：它是「桌宠配置」里标签行上的一个技能（见 settings/skills.ts），

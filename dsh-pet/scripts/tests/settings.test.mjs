@@ -91,7 +91,8 @@ async function open(t, { get = customized, put, post, viewport = { width: 900, h
   t.after(() => assert.deepEqual(errors, []));
   await page.route('**/dsh-pet-7340/**', async (route) => {
     const request = route.request();
-    if (new URL(request.url()).pathname === '/dsh-pet-7340/config') {
+    const pathname = new URL(request.url()).pathname;
+    if (pathname === '/dsh-pet-7340/config') {
       if (request.method() === 'PUT') {
         writes.push(request.postDataJSON());
         if (put) return put(route);
@@ -101,12 +102,31 @@ async function open(t, { get = customized, put, post, viewport = { width: 900, h
       if (typeof get === 'function') return get(route);
       return route.fulfill({ json: get });
     }
-    if (request.url().endsWith('/config/meta')) {
+    if (pathname === '/dsh-pet-7340/config/meta') {
       return route.fulfill({
         json: {
           user: '/test/main-config.jsonc',
           default: '/test/assets/config.jsonc',
           animations: '/test/main-animation',
+        },
+      });
+    }
+    // RuntimeCard 读 info.electron.ready；兜底的模型清单形状（只有 providers）会让它抛 TypeError 白屏。
+    // 这里给合法的 RuntimeSnapshot 桩，其余非 config 路由（/models、/runtime/electron）维持兜底。
+    if (pathname === '/dsh-pet-7340/runtime') {
+      return route.fulfill({
+        json: {
+          electron: {
+            ready: true,
+            path: '/test/electron',
+            version: 'test',
+            downloading: false,
+            lastError: null,
+            lastErrorAt: null,
+          },
+          logPath: '/test/dsh-pet.log',
+          electronDir: '/test/electron-dir',
+          inProcess: false,
         },
       });
     }
@@ -124,6 +144,12 @@ async function save(page) {
     page.waitForResponse((response) => response.request().method() === 'PUT'),
     page.getByRole('button', { name: 'Save', exact: true }).first().click(),
   ]);
+}
+
+// 宿主 PUT /config 按白名单重建 pets，读取侧派生出来的 assetRoot/extra 不进用户配置；
+// 断言提交体前先按同一口径去掉它们，否则比较的是「客户端多带的派生字段」而非落盘结果。
+function persistedPets(pets) {
+  return pets.map(({ assetRoot, extra, ...rest }) => rest);
 }
 
 test('config save errors: write failures keep edits visible and allow a retry', async (t) => {
@@ -153,8 +179,10 @@ test('config save errors: write failures keep edits visible and allow a retry', 
 });
 
 test('config save errors: validation failures explain the rejected configuration', async (t) => {
+  // 宿主契约：业务失败是 200 + {ok:false,reason:'bad-request'}，4xx 只留给协议错误；
+  // 回 400 会被客户端归到传输失败，显示的是另一条文案。
   const { page } = await open(t, {
-    put: (route) => route.fulfill({ status: 400, json: { error: 'invalid pet config' } }),
+    put: (route) => route.fulfill({ json: { ok: false, reason: 'bad-request', message: 'invalid pet config' } }),
   });
   await save(page);
   await page
@@ -200,7 +228,8 @@ test('pending config prevents editing and saving placeholder defaults', async (t
     },
   });
   try {
-    assert.equal(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled(), true);
+    // 页面有两个同名 Save（宠物卡就近保存 + 底部操作区）：任一被禁用即说明表单整体不可写。
+    assert.equal(await page.getByRole('button', { name: 'Save', exact: true }).first().isDisabled(), true);
     assert.equal(await page.locator('input[type=text]').first().isDisabled(), true);
     assert.deepEqual(writes, []);
   } finally {
@@ -222,13 +251,15 @@ for (const failure of ['http', 'network', 'malformed', 'null']) {
               ),
     });
     await page.getByRole('alert').waitFor();
-    assert.equal(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole('button', { name: 'Save', exact: true }).first().isDisabled(), true);
     assert.deepEqual(writes, []);
     fail = false;
     await page.getByRole('button', { name: 'Retry', exact: true }).click();
     await save(page);
     assert.equal(writes.length, 1);
-    for (const [key, value] of Object.entries(customized.main)) assert.deepEqual(writes[0][key], value, key);
+    for (const [key, value] of Object.entries(customized.main)) {
+      assert.deepEqual(key === 'pets' ? persistedPets(writes[0][key]) : writes[0][key], value, key);
+    }
   });
 }
 
@@ -240,14 +271,108 @@ test('Sync updates all controls so a subsequent Save preserves the restored defa
   await page.getByRole('button', { name: 'Sync', exact: true }).last().click();
   await save(page);
   assert.equal(writes.length, 2);
-  for (const [key, value] of Object.entries(defaults.main)) assert.deepEqual(writes[1][key], value, key);
+  for (const [key, value] of Object.entries(defaults.main)) {
+    // pets 走持久化口径（去掉读取侧派生的 assetRoot/extra），其余字段原样比较。
+    assert.deepEqual(key === 'pets' ? persistedPets(writes[1][key]) : writes[1][key], value, key);
+  }
 });
 
 test('fresh config refreshes the pet list instead of saving an old bridge snapshot', async (t) => {
   const fresh = { main: { ...customized.main, pets: [{ ...pet, name: 'Updated elsewhere', size: 360 }] } };
   const { page, writes } = await open(t, { get: fresh });
   await save(page);
-  assert.deepEqual(writes[0].pets, fresh.main.pets);
+  assert.deepEqual(persistedPets(writes[0].pets), fresh.main.pets);
+});
+
+// 人设框回归：曾经 min-height 只有 66px（≈3 行），长人设既不能通读也不显示滚动条；
+// 现在默认 150px（8 行）起、随内容长高、到样式里的 max-height 封顶后改内部滚动。这里盯住三个不变量。
+const LONG_PERSONA =
+  Array.from(
+    { length: 12 },
+    (_, i) => `第${i + 1}段：${'要写得足够长才能撑开人设框，这句重复到够数为止。'.repeat(3)}`,
+  ).join('\n') + '\n结尾一行';
+
+/** 量一个 textarea 的关键几何、滚动样式与高度上限。 */
+async function measureArea(area) {
+  return area.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      valueLength: el.value.length,
+      clientHeight: el.clientHeight,
+      offsetHeight: el.offsetHeight,
+      scrollHeight: el.scrollHeight,
+      clientWidth: el.clientWidth,
+      scrollWidth: el.scrollWidth,
+      overflowY: style.overflowY,
+      // 上限从样式读，不写死像素：将来调 max-height 时断言不会假红；none/auto 解析成 null = 无上限。
+      maxHeight: Number.isFinite(parseFloat(style.maxHeight)) ? parseFloat(style.maxHeight) : null,
+    };
+  });
+}
+
+test('persona textarea keeps a readable default height and never clips or overflows horizontally', async (t) => {
+  const { page } = await open(t, { viewport: { width: 900, height: 900 }, lang: 'zh' });
+  const area = page.locator('textarea.dsh-pet-cfg__area').first();
+  await area.waitFor();
+
+  // 1) 空值：默认高度必须是 150px 那一档，而不是旧的 66px（≈3 行）。
+  //    border-box 下 clientHeight 比 min-height 少上下各 1px 边框，故用 offsetHeight 判下限、clientHeight 判余量。
+  const empty = await measureArea(area);
+  assert.ok(
+    empty.offsetHeight >= 150,
+    `empty offsetHeight ${empty.offsetHeight} < 150 (default height regressed to 66px?)`,
+  );
+  assert.ok(empty.clientHeight >= 145, `empty clientHeight ${empty.clientHeight} < 145 (border-box tolerance)`);
+
+  // 2) 填长人设：必须长高；长到 max-height 封顶时改为内部滚动，绝不允许「框不变高、内容被裁掉」。
+  await area.fill(LONG_PERSONA);
+  assert.ok(LONG_PERSONA.length >= 300, `fixture persona only ${LONG_PERSONA.length} chars`);
+  const filled = await measureArea(area);
+  assert.equal(filled.valueLength, LONG_PERSONA.length);
+  assert.ok(filled.clientHeight >= 150, `filled clientHeight ${filled.clientHeight} < 150`);
+  // 「触顶」判据从 max-height 派生（留 6px 边框与取整余量），不再硬编码某个封顶值。
+  const capped = filled.maxHeight !== null && filled.clientHeight >= filled.maxHeight - 6;
+  if (capped) {
+    // 触顶：必须能内部滚动（overflowY auto/scroll 且 scrollHeight ≥ clientHeight）。
+    assert.ok(
+      ['auto', 'scroll'].includes(filled.overflowY),
+      `capped textarea overflowY=${filled.overflowY}, expected auto/scroll so content stays reachable`,
+    );
+    assert.ok(
+      filled.scrollHeight >= filled.clientHeight,
+      `capped textarea scrollHeight ${filled.scrollHeight} < clientHeight ${filled.clientHeight}`,
+    );
+  } else {
+    // 未触顶：应当按内容完全展开，没有裁切。
+    assert.ok(
+      filled.scrollHeight <= filled.clientHeight + 2,
+      `expanded textarea clips content: scrollHeight ${filled.scrollHeight} > clientHeight ${filled.clientHeight} + 2`,
+    );
+  }
+  // 任何情况下都不突破封顶（border-box 下 offsetHeight 比 max-height 多上下各 1px 边框）。
+  if (filled.maxHeight !== null) {
+    assert.ok(
+      filled.offsetHeight <= filled.maxHeight + 2,
+      `textarea exceeded max-height: offsetHeight ${filled.offsetHeight} > max-height ${filled.maxHeight} + 2`,
+    );
+  }
+
+  // 3) 360px 窄视口：不得横向溢出（scrollWidth ≤ clientWidth）。
+  await page.setViewportSize({ width: 360, height: 800 });
+  await area.scrollIntoViewIfNeeded();
+  const narrow = await measureArea(area);
+  assert.ok(
+    narrow.scrollWidth <= narrow.clientWidth,
+    `narrow viewport horizontal overflow: scrollWidth ${narrow.scrollWidth} > clientWidth ${narrow.clientWidth}`,
+  );
+
+  if (process.env.DSH_PET_UI_ARTIFACTS) {
+    mkdirSync(process.env.DSH_PET_UI_ARTIFACTS, { recursive: true });
+    await page.screenshot({
+      path: join(process.env.DSH_PET_UI_ARTIFACTS, 'settings-zh-360-persona-long.png'),
+      fullPage: true,
+    });
+  }
 });
 
 for (const lang of ['en', 'zh']) {
@@ -275,11 +400,15 @@ for (const lang of ['en', 'zh']) {
 test('model picker remains anchored while the responsive settings panel is scrolled', async (t) => {
   const { page, writes } = await open(t, { viewport: { width: 900, height: 700 } });
   const trigger = page.locator('.dsh-pet-mp__trigger').first();
+  // 设置页比 700px 视口长得多，触发器初始在视口外：先滚到它可见处，否则「浮层贴住触发器」
+  // 这条不变量在触发器本身就不可见时无从验证（浮层只能被钳在视口外）。
+  await trigger.scrollIntoViewIfNeeded();
+  const base = await page.evaluate(() => window.scrollY);
   await trigger.click();
   const panel = page.getByRole('menu');
   await panel.waitFor();
-  for (const scrollY of [0, 120]) {
-    await page.evaluate((y) => window.scrollTo(0, y), scrollY);
+  for (const offset of [0, 120]) {
+    await page.evaluate((y) => window.scrollTo(0, y), base + offset);
     await page.waitForFunction(() => {
       const trigger = document.querySelector('.dsh-pet-mp__trigger').getBoundingClientRect();
       const panel = document.querySelector('.dsh-pet-mp__panel').getBoundingClientRect();

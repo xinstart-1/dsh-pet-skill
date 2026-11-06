@@ -54,7 +54,12 @@ const SETTINGS_CSS = [
 
   // 人设复用 __inp 的边框与字号，只补高度与纵向缩放；人设没有长度上限，右下角只显示字数、不阻断输入。
   '.dsh-pet-cfg__persona{display:flex;flex-direction:column;gap:2px;min-width:0}',
-  '.dsh-pet-cfg__area{min-height:66px;resize:vertical;line-height:18px}',
+  // 人设是整段长文，默认高度按 8 行给（66px 只能看到 3 行，写 400+ 字时几乎无法通读）；
+  // field-sizing:content 让框随内容长高到 420px 封顶，超出改内部滚动，不再裁掉正文。
+  // 420 而不是更小：设置页正文宽度约 470px 时，500 字人设正好落在 380px 上下，封顶再低就会出现
+  // 「差最后几行就要滚动」的尴尬高度；更宽的页面本来也用不到这个上限。
+  // 不支持的浏览器只认 min-height，得到一个可手动纵向拉伸的大框，不会退回到 66px。
+  '.dsh-pet-cfg__area{min-height:150px;max-height:420px;resize:vertical;line-height:18px;overflow-y:auto;field-sizing:content}',
   '.dsh-pet-cfg__count{font-size:11px;color:var(--dsw-alias-label-tertiary);text-align:right}',
 
   '.dsh-pet-cfg__toggle{display:flex;align-items:center;gap:6px;min-width:0;font-size:13px;color:var(--dsw-alias-label-primary)}',

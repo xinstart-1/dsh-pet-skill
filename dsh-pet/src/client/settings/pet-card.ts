@@ -189,6 +189,7 @@ export function makePetCard(rt: SettingsRuntime): FunctionComponent<PetCardProps
         // 人设（可选，实例级）：写在这只宠物上的 whisperPrompt，空 = 跟随所属条目的人设。
         // 只存储与回显，不在这里拼 system；拼装（名字声明 + 时间背景）在宿主半侧。
         // 占位符直接用条目人设正文，让「跟随的是什么」可见；人设没有长度上限，右下角只显示字数。
+        // rows 只作不支持 field-sizing 时的兜底（8 行 ≈ 150px 的 min-height）；支持的浏览器按内容长高。
         field(
           t('personaLabel'),
           h('div', {
@@ -196,7 +197,7 @@ export function makePetCard(rt: SettingsRuntime): FunctionComponent<PetCardProps
             children: [
               h('textarea', {
                 className: INPUT_CLASS + ' dsh-pet-cfg__area',
-                rows: 3,
+                rows: 8,
                 value: String(pet.whisperPrompt ?? ''),
                 disabled: busy,
                 placeholder: props.entryPrompt,
