@@ -349,7 +349,10 @@
         quickStatus.textContent = '不用守着，装完会提示';
       } else if (napcat.running === true) {
         quickHint.textContent = `网关运行中（pid=${napcat.pid}）`;
-        quickStatus.textContent = '就差扫码登录了——登录后自动连上';
+        quickStatus.textContent =
+          typeof napcat.webuiUrl === 'string' && napcat.webuiUrl !== ''
+            ? '等扫码：登录页已自动打开；没弹出就点下面的「打开扫码登录页」'
+            : '等扫码：点下面的「打开扫码登录页」';
       } else if (napcat.installed === true) {
         quickHint.textContent = '网关已安装';
         quickStatus.textContent = '点 ② 自动写配置并连接';
@@ -359,6 +362,14 @@
       } else {
         quickHint.textContent = napcat.supported === true ? '还没安装' : '此平台不支持内置安装器';
         quickStatus.textContent = '';
+      }
+      // 扫码入口：只有「网关在跑 + 拿到 WebUI 地址」时才有意义，其余情况藏起来，
+      // 免得给一个点了没反应的按钮。
+      const webuiBtn = $('#btn-napcat-webui');
+      if (webuiBtn) {
+        const hasWebui = typeof napcat.webuiUrl === 'string' && napcat.webuiUrl !== '';
+        webuiBtn.hidden = !(hasWebui && napcat.running === true);
+        webuiBtn.title = hasWebui ? napcat.webuiUrl : '';
       }
     }
     renderInstallProgress();
@@ -588,7 +599,7 @@
       try {
         const r = await api('/napcat/onekey', { method: 'POST' });
         if (r.ok === true) {
-          toast('已自动写配置、启动网关并发起连接。最后一步：用小号在网关窗口扫码登录，登录后状态变在线', 'ok');
+          toast('已自动写配置、启动网关并发起连接。扫码登录页已自动打开（二维码只在那个页面里，网关窗口看不到）', 'ok');
         } else {
           toast(r.reason || '一键连接失败', 'err');
         }
@@ -690,7 +701,7 @@
       (event) =>
         void napcatAction(
           '/napcat/launch',
-          () => '网关已启动：在弹出的窗口里扫码登录小号，几秒后看「现在什么情况」里的网关状态',
+          () => '网关已启动，扫码登录页已自动打开（没弹出就点「打开扫码登录页」）；二维码只在那个页面里',
           event.currentTarget,
         ),
     );
@@ -699,6 +710,28 @@
       'click',
       (event) => void napcatAction('/napcat/stop', () => '已停止网关', event.currentTarget),
     );
+
+    // 重开扫码登录页：网关自动开过的那一次可能被关了/被浏览器拦截。
+    $('#btn-napcat-webui').addEventListener('click', async (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      try {
+        const r = await api('/napcat/webui', { method: 'POST' });
+        if (r.ok === true) {
+          toast('已打开扫码登录页', 'ok');
+        } else if (typeof r.url === 'string' && r.url !== '') {
+          // 开不起来也要让用户拿得到地址，而不是只丢一句失败
+          toast(`${r.reason || '打不开浏览器'}：${r.url}`, 'err');
+        } else {
+          toast(r.reason || '打不开扫码登录页', 'err');
+        }
+        if (r.status !== undefined) napcat = r.status;
+        await refreshNapcat();
+      } finally {
+        btn.disabled = false;
+        renderNapcat();
+      }
+    });
   }
 
   /* ---------------- 内嵌模式 ---------------- */

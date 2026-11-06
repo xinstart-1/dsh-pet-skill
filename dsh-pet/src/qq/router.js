@@ -195,13 +195,22 @@ export function createRouter({ service, log, napcat }) {
 
       // 一键收尾：安装完成后调用——写配置（令牌自动生成回填）→ 启动网关 → 连接。
       // 扫码登录仍要人来，但其余步骤全部自动。
+      // 登录看守挂在 launch 内部：登录成功会生成账号级配置（servers 为空），看守负责
+      // 补写服务器并带号重启——没有它，扫码成功后 3001 也永远不监听（实测踩过）。
       case 'POST /napcat/onekey': {
         const cfg = service.getConfig();
         const port = Number(/:(\d{2,5})/.exec(String(cfg.gateway?.wsUrl ?? ''))?.[1] ?? 0) || 3001;
         const write = await napcat.writeConfig({ port, token: cfg.gateway?.token ?? '' });
-        if (write.ok !== true) return sendJson(res, 409, { ok: false, reason: write.reason, status: await napcat.status() });
+        if (write.ok !== true)
+          return sendJson(res, 409, { ok: false, reason: write.reason, status: await napcat.status() });
         await service.saveConfig({ gateway: { token: write.token, wsUrl: write.wsUrl } });
-        const launched = await napcat.launch({ uin: String(service.getConfig().account?.selfId ?? '') });
+        // port/token 必须跟下去：launch 会把它交给后台登录看守写账号级配置。
+        // 漏传时看守会自己生成一个新令牌，网关与插件从此令牌不一致，握手必被踢。
+        const launched = await napcat.launch({
+          uin: String(service.getConfig().account?.selfId ?? ''),
+          port,
+          token: write.token,
+        });
         // 已在运行不算失败
         if (launched.ok !== true && launched.already !== true) {
           return sendJson(res, 409, { ok: false, reason: launched.reason, status: await napcat.status() });
@@ -224,8 +233,50 @@ export function createRouter({ service, log, napcat }) {
       }
 
       case 'POST /napcat/launch': {
-        const r = await napcat.launch({ uin: String(service.getConfig().account?.selfId ?? '') });
+        // 同 /napcat/onekey：令牌与端口要原样带进 launch，否则看守会另造一个令牌。
+        const cfg = service.getConfig();
+        const port = Number(/:(\d{2,5})/.exec(String(cfg.gateway?.wsUrl ?? ''))?.[1] ?? 0) || 3001;
+        const r = await napcat.launch({
+          uin: String(cfg.account?.selfId ?? ''),
+          port,
+          token: cfg.gateway?.token ?? '',
+        });
         return sendJson(res, r.ok ? 200 : 409, { ...r, status: await napcat.status() });
+      }
+
+      // 已登录但账号级配置缺服务器（旧版本装的/看守没赶上）：手动补写并带号重启。
+      // 这是「明明扫码成功了，状态还是离线」的兜底出口——不用卸载重装。
+      case 'POST /napcat/repair-account': {
+        const cfg = service.getConfig();
+        // 这里原来写成了 `\\d`（正则里等于"字面反斜杠 + d"），永远匹配不上、
+        // 端口永远回落到 3001。用户把 wsUrl 改成 3010 时这条兜底会写错端口。
+        const port = Number(/:(\d{2,5})/.exec(String(cfg.gateway?.wsUrl ?? ''))?.[1] ?? 0) || 3001;
+        const r = await napcat.watchAccountLogin({ port, token: cfg.gateway?.token ?? '' });
+        if (r.ok !== true) return sendJson(res, 409, { ok: false, reason: r.reason, status: await napcat.status() });
+        // 重启完重新发起连接（网关起来了，3001 应在监听）
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        service.connect();
+        return sendJson(res, 200, { ok: true, uin: r.uin, status: await napcat.status() });
+      }
+
+      // 重新打开扫码登录页。网关起来后插件会自动开一次，但用户可能关掉了浏览器标签、
+      // 或者当初点「② 一键连接」时浏览器被拦截没弹出来——这里给他一个显式的重开入口。
+      // 二维码只在 WebUI 里（`[StdOut] 已重定向到命名管道` 之后控制台就看不到码了）。
+      case 'POST /napcat/webui': {
+        const opened = await napcat.openWebuiWhenReady();
+        const status = await napcat.status();
+        if (opened === '') {
+          return sendJson(res, 409, {
+            ok: false,
+            reason:
+              status.webuiUrl === ''
+                ? '网关还没起来（或 WebUI 还没就绪），先点 ② 一键连接'
+                : '没能在浏览器里打开，可手动复制这个地址',
+            url: status.webuiUrl,
+            status,
+          });
+        }
+        return sendJson(res, 200, { ok: true, url: opened, status });
       }
 
       case 'POST /napcat/fetchlatest': {

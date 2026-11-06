@@ -44,11 +44,12 @@
             </div>
             <p class="tip" id="quick-tip">
               点一下就行：<b>插件在后台自动运行官方安装器</b>（自动从腾讯官方下载 QQ 客户端并装好 NapCat，几分钟，不用守着）。
-              装完点「② 一键连接」自动配好端口令牌并发起连接，最后用<b>小号</b>扫码登录即可。
+              装完点「② 一键连接」自动配好端口令牌并发起连接，<b>扫码登录页会自动在浏览器里打开</b>，用小号扫码即可。
             </p>
             <div class="row">
               <button id="btn-quick-setup" class="btn btn-primary">① 一键安装（后台自动）</button>
               <button id="btn-quick-connect" class="btn">② 一键连接</button>
+              <button id="btn-napcat-webui" class="btn" hidden>打开扫码登录页</button>
               <span class="hint" id="quick-status"></span>
             </div>
 
@@ -74,9 +75,10 @@
               <span class="hint">OneBot v11 · 正向 WebSocket</span>
             </div>
             <p class="tip">
-              插件<b>只连接</b>，不启动、不注入任何 QQ 进程。你在
-              <b>NapCat</b>（首选，Windows 有一键包）／LLBot（原 LLOneBot）／SnowLuma 里登录一个 <b>小号</b>，把它的正向
-              WebSocket 地址填进来即可。
+              对话本身<b>只走一条 WebSocket</b>：网关推事件过来，插件回调用。网关可以是你在
+              <b>NapCat</b>（首选，Windows 有一键包）／LLBot（原 LLOneBot）／SnowLuma 里自己装的，也可以由上面的
+              「一键安装」装进插件自己的目录——两边都只是在<b>本机 127.0.0.1</b> 上说话。你在网关里登录<b>小号</b>，
+              把它的正向 WebSocket 地址填进来即可。
             </p>
             <p class="tip warn">Lagrange.OneBot 已于 2025-10 归档，官方 SignServer 停运——装了也登不进去，不要选。</p>
 
@@ -142,8 +144,9 @@
             </div>
             <p class="tip">
               插件里已经带了 NapCat 官方安装器（<b>只带安装器，不带 QQ 客户端</b>——那份由安装器从腾讯官方渠道下载）。
-              点「解压安装器」后运行里面的 <b>NapCatInstaller.exe</b>，安装目录请填下面这个路径；
-              装完点「写入配置」，端口、消息格式和令牌会自动配好并回填到上面，你不用手抄。
+              点「① 一键安装」就全自动：解压安装器 → 后台跑完（下载 QQ 与网关 → 解压 → 装配），
+              装到 <code>napcat/app/</code> 下；装完点「② 一键连接」，端口、消息格式和令牌会自动配好
+              并回填到上面，你不用手抄。
             </p>
             <div class="kv" id="napcat-kv"></div>
             <div class="row">
@@ -155,13 +158,28 @@
               <span class="hint" id="napcat-hint"></span>
             </div>
             <p class="tip warn" id="napcat-warn">
-              安装器是图形界面：选目录、下载 QQ 内核、扫码登录这三步必须你自己点，插件替代不了。
-              装好后用<b>小号</b>扫码，别用日常号。
+              安装器没有界面，也不用选目录：它把 QQ 与网关解压进插件自己的目录
+              <code>napcat/app/</code>（解出约 1.15GB），<b>不碰你系统里装的 QQ</b>。
+              全程唯一要你亲手的，是最后用<b>小号扫码登录</b>——那必须是账号主人本人，别用日常号。
             </p>
             <p class="tip">
-              <b>上面「① 一键安装」是全自动的</b>：不用你去窗口里点任何东西，安装器会在后台跑完
-              （自动从腾讯官方下载 QQ 并解压进 <code>napcat/app/</code>，约 1.2GB）。装好后再点 ② 即可。
-              你唯一要亲手做的一步，是最后用<b>小号扫码登录</b>——那必须是账号主人本人。
+              <b>「① 一键安装」是全自动的</b>：不用你去任何窗口里点东西，安装器在后台跑完
+              （自动从腾讯官方下载 QQ 并解压进 <code>napcat/app/</code>）。装好后再点 ② 即可。
+              网络慢时 QQ 那段 300MB 是大头；<b>重跑会跳过已下好的安装包</b>（它留在
+              <code>napcat/QQ.exe</code>）。
+            </p>
+            <p class="tip">
+              <b>失败了直接再点一次就行</b>：下载中断会留下截断的安装包，安装器自己不会察觉，
+              于是每次都卡在同一处。插件在每次安装前会检查 <code>QQ.exe</code> 与
+              <code>NapCat.Shell.zip</code> 是否完整，<b>发现截断就自动删掉重新下载</b>；
+              安装失败后也会立刻清一次。你不需要手动删文件。
+            </p>
+            <p class="tip">
+              <b>网关包由插件先下好再交给安装器</b>：安装器自己下 <code>NapCat.Shell.zip</code> 时
+              <b>不校验长度</b>，镜像把 34MB 截成 4MB 它也报「下载成功」，接着解压就失败——
+              这是「每次都失败」的真正原因。所以插件会先按官方元数据（大小 + SHA-256）自己下一份，
+              校验通过才放进安装器的工作目录，让它跳过那段不可靠的下载。
+              拿不到就退回安装器自己的路子，不会因此装不了。
             </p>
             <p class="tip" id="napcat-fetch-hint">
               <b>下载最新安装器</b>：当随包那份过旧或解压失败时，从这里从 GitHub 拉最新版
@@ -360,7 +378,11 @@
             <div class="card-head"><h2>风险，说在前面</h2></div>
             <ul class="bullets">
               <li>网关是第三方程序，登录机器人号有<b>被风控 / 封号</b>的可能。用小号，别用主号。</li>
-              <li>本插件<b>不下载、不启动、不注入</b>任何 QQ 客户端，也不替你同意任何协议。</li>
+              <li>
+                插件<b>不碰你系统里装的 QQ</b>：内置安装器把 QQ 与 NapCat 解压进插件自己的数据目录
+                （<code>napcat/app/</code>），那是一份独立的便携副本；你日常那个 QQ 不参与、不被改，也不会替你同意任何协议。
+              </li>
+              <li>网关进程由插件在你要用时拉起、由「停止」杀回（<code>taskkill /T</code>），退出插件不留孤儿——但它仍是第三方程序，注入的是那份副本。</li>
               <li>没有批量发送、没有群发、没有好友申请——一个无鉴权的本地端口不该有那种能力。</li>
               <li>默认总开关关、试运行开。你不手动打开，一句话都不会发出去。</li>
             </ul>
@@ -370,14 +392,15 @@
             <div class="card-head"><h2>装一个网关</h2></div>
             <ol class="steps">
               <li>
-                装网关：用上面「<b>一键装网关</b>」那块最省事（解压安装器 → 跑一次安装器 →
-                写入配置）。不想用内置安装器的话，自己下载也行：<b>首选 NapCat</b>（Windows 一键包，默认 WS 端口
+                装网关：用上面「<b>一键装网关</b>」那块最省事（① 一键安装全自动跑完，② 一键连接自动写配置并连上）。
+                不想用内置安装器的话，自己下载也行：<b>首选 NapCat</b>（Windows 一键包，默认 WS 端口
                 3001），也可 LLBot、SnowLuma。Lagrange 已归档，不要选。
               </li>
-              <li>用它登录你准备的 QQ 小号（扫码）。</li>
+              <li>用它登录你准备的 QQ 小号（扫码）——这是全程唯一要你亲手做的一步。</li>
               <li>
                 在它的设置里打开<b>正向 WebSocket</b>——NapCat 里是建一个「<b>WebSocket 服务器</b>」，不是「WebSocket
                 客户端」（配反了它会主动来连你，插件永远等不到连接）。记下端口（默认 3001），设一个令牌。
+                走内置「② 一键连接」时这一步插件已经替你写好配置，可以跳过。
               </li>
               <li>回到「连接」页填地址与令牌 → 保存 → 连接 → 看登录号对不对。</li>
               <li>先在「聊天」页开着试运行发一条私聊，确认回复的样子，再关掉试运行。</li>
@@ -395,15 +418,16 @@
             <p class="tip">
               <b>正确的卸载顺序：先点下面的按钮清理，再去 DSH 插件页移除。</b>
               如果<b>直接在插件页删了插件</b>也没关系——插件在卸载时会自动清掉
-              <code>napcat/</code>（网关安装器与已装网关，约 1.2GB，可重下），
+              <code>napcat/</code>（网关安装器与已装网关，实测约 1.5GB，可重下），
               但<b>配置与 QQ 登录态会留在磁盘上</b>，需要手动删掉
               <code>%DSH_HOME%/dsh-pet-qq</code> 与 <code>%DSH_HOME%/dsh-pet</code>。
             </p>
             <p class="tip">
               <b>关于 QQ 客户端本体</b>：NapCat 的安装器是把 QQ <b>解压进插件自己的目录</b>
-              （<code>napcat/app/NapCat.*.Shell/</code>，约 1.2GB），不是装到系统的
-              <code>C:\Program Files</code>。所以上面的清理会把「② 一键连接」装出来的那份 QQ
-              和网关一起删干净，不会在你系统里留一个陌生 QQ；你日常用的 QQ 是另外装的，不受影响。
+              （<code>napcat/app/NapCat.*.Shell/</code>，解出约 1.15GB；外加留在 <code>napcat/QQ.exe</code> 的
+              300MB 安装包，重跑时靠它跳过下载），不是装到系统的
+              <code>C:\Program Files</code>，也不改系统 QQ 的注册表项。所以上面的清理会把「① 一键安装」装出来的那份
+              QQ 和网关一起删干净，不会在你系统里留一个陌生 QQ；你日常用的 QQ 是另外装的，不受影响。
             </p>
             <p class="tip warn">
               下面的按钮会<b>立即删除</b>上述目录——QQ 小号的<b>登录态与全部配置都会丢失</b>，且不可恢复。

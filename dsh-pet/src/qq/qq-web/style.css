@@ -680,6 +680,22 @@ body.embed .btn-primary {
   border-color: var(--accent);
   color: #fff;
 }
+/*
+ * 危险按钮同理，而且更容易被漏掉：它只在「卸载与清理」卡片里出现一次，
+ * 平时没人往下翻。`body.embed .btn`（0,2,1）压过 `.btn-danger`（0,1,0），
+ * 把背景刷成透明；`.btn-danger` 的 `color:#fff` 却还在——于是白底白字，
+ * 用户看到的就是「按钮没显示」（实测截图确认：红框里只剩一个空圆角轮廓）。
+ * 凡是自带背景色 + 白字的按钮，在嵌入模式下都要在这里补一条同样的覆盖。
+ */
+body.embed .btn-danger {
+  background: #d94f3d;
+  border-color: #d94f3d;
+  color: #fff;
+}
+body.embed .btn-danger:hover {
+  background: #c2412f;
+  color: #fff;
+}
 
 /* 深色兜底：父页面的主题变量进不了 iframe，至少跟上系统偏好 */
 @media (prefers-color-scheme: dark) {

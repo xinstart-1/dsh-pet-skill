@@ -2,8 +2,10 @@
  * OneBot v11 客户端：一条正向 WebSocket 收事件，调用走 WS（没配 HTTP 就全走 WS）。
  *
  * 边界写死在这里的几条：
- * 1. **只连接，不启动、不注入**。网关（NapCat / LLBot / SnowLuma）由用户自己装、
- *    自己登录。本插件不下载、不替你点协议、不碰 QQ 进程——那条线越过去就是"替你承担封号风险"。
+ * 1. **对话链路只连接，不登录、不注入**。网关（NapCat / LLBot / SnowLuma）由用户自己装、
+ *    自己登录，本模块只往它的正向 WebSocket 上说话，不替你点协议。那条线越过去就是
+ *    "替你承担封号风险"。（「装网关」是另一件事，在 `napcat.js`：它只是把 NapCat 官方
+ *    安装器跑完，QQ 与网关都解压成插件目录下的便携副本。）
  * 2. **连上先核对身份**：`get_login_info` 拿到的号与配置里的机器人号不一致时，
  *    只进「身份不符」状态、不自动回话。发错号的代价是别人看到你没说过的话。
  * 3. **调用超时一定释放**：OneBot 的 echo 是唯一的回执凭据，等不到就报错，不猜成功。
@@ -110,7 +112,14 @@ export function createOneBot({ log, fetchImpl = fetch, now = () => Date.now() })
     }
   }
 
-  /** 断线重连（指数退避，最多 60 秒） */
+  /**
+   * 断线重连（指数退避，最多 60 秒）。
+   *
+   * 刷屏守则：每次都往控制台写一行，宿主会把它收进 stderr 环形缓冲，量一大就把
+   * 真正有用的错误挤出 64KB 尾巴（实测：网关没装时 30 秒一条刷了几百行，把 DSH
+   * 崩溃日志里其他插件的真实报错全顶没了）。所以只在**第 1、2、3 次以及之后每
+   * 30 条**写一行提醒，其余次数只悄悄重试，不碰控制台。
+   */
   function scheduleReconnect() {
     if (stopped || reconnectTimer !== null) return;
     const base = Math.max(1, Number(opts.reconnectSec) || 5) * 1000;
@@ -120,7 +129,8 @@ export function createOneBot({ log, fetchImpl = fetch, now = () => Date.now() })
       void dial();
     }, delay);
     if (typeof reconnectTimer === 'object' && reconnectTimer !== null) reconnectTimer.unref?.();
-    log.warn(`${Math.round(delay / 1000)} 秒后重连（第 ${attempts} 次失败）`);
+    const quiet = attempts > 3 && attempts % 30 !== 0;
+    if (!quiet) log.warn(`${Math.round(delay / 1000)} 秒后重连（第 ${attempts} 次失败）`);
   }
 
   /** 打开连接池里的挂起调用全部失败——不能让调用方永远等 */

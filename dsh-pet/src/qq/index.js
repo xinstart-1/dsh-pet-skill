@@ -7,8 +7,12 @@
  * 2. `/qq` 斜杠命令（状态 / 连断 / 手动发一条）
  * 3. 启动：读配置 → 读账本 → 按总开关决定是否连网关
  *
- * **只连接，不启动、不注入任何 QQ 进程**：网关（NapCat / LLBot / SnowLuma）由用户自己装、
- * 自己登录。这条边界是刻意的——代替用户点协议、托管登录态，等于替他承担封号风险。
+ * **对话链路只连接，不登录、不注入**：网关（NapCat / LLBot / SnowLuma）由用户自己装、自己登录，
+ * 插件只往它的正向 WebSocket 上说话。这条边界是刻意的——代替用户点协议、托管登录态，
+ * 等于替他承担封号风险。
+ * 边界内唯一的例外是「装网关」：`napcat.js` 会解压并后台运行 NapCat 官方安装器（它把 QQ 解压成一份
+ * 便携副本到 `dsh-pet-qq/napcat/app/`）、并在用户点「启动网关」时 spawn 这个我们自己拉起的进程。
+ * 那份副本不装进系统（不落 Program Files、不改系统 QQ 的注册表项），用户日常用的 QQ 不参与。
  *
  * @module dsh-pet-qq
  */
@@ -51,7 +55,13 @@ export function apply(ctx, deps = {}) {
 
   // 网关安装器：解压随包分发的 NapCat OneKey、预置 OneBot 配置、启停进程。
   // 它是"安装助手"，不参与收发消息——消息永远只走 service 那条 OneBot 长连接。
-  const napcat = createNapcat({ root: join(paths.dir, 'napcat'), log });
+  const napcat = createNapcat({
+    root: join(paths.dir, 'napcat'),
+    log,
+    // 登录看守确认 QQ 号后落盘：`account.selfId` 有值，下次启动才能带号走快速登录，
+    // 否则每回 launch 都传空号、每次都要重新扫码。saveConfig 是深合并，不碰别的字段。
+    onLogin: (uin) => service.saveConfig({ account: { selfId: uin } }),
+  });
 
   // 宿主 LLM：唯一生成通路（免 Key）。拿不到就如实失败，上层不发，没有模板兜底。
   service.setHostLlm(createHostLlm({ ctx }));
@@ -85,16 +95,20 @@ export function apply(ctx, deps = {}) {
     return () => {
       disposed = true;
       void service.stop();
-      // 插件移除/禁用/宿主退出时：
-      // 1. 不把我们拉起的网关变成孤儿；
-      // 2. 顺手清掉 napcat/ 目录（安装器 + 已装网关，约 1.2GB，随时可重下）——
-      //    ctx.effect 无法区分「移除」与「禁用」，所以这里只删可再生、无隐私的产物；
-      //    配置与 QQ 登录态不在这里删（那要走设置页「彻底卸载并清理」，见 uninstall.js）。
-      // 用同步版：清理函数返回后 DSH 可能立刻销毁进程，异步删除会被截断、白删。
+      // 插件移除/禁用/宿主退出时：只保证不把我们拉起的网关变成孤儿，**绝不删目录**。
+      //
+      // 这里曾经调 `napcat.wipeSync()`（注释写的是"顺手清掉 napcat/，随时可重下"）。
+      // 那个判断的成本估错了：napcat/ 里躺着的是 1.2GB 的 QQ 客户端副本 + NapCat 网关，
+      // 以及**扫码登录出来的登录态**。它们"可再生"的前提是用户愿意再等一次 300MB 下载、
+      // 再扫一次码；而 `ctx.effect` 的清理函数在**开发期插件热重载**时同样会跑——
+      // 实测：正在用插件的时候重建产物，整份网关被删掉，配置目录、登录态、会话全没了。
+      // 卸载时想清干净，那是用户在设置页显式点「彻底卸载并清理」的事（uninstall.js），
+      // 不是一次热重载该顺手做的事。
       try {
-        napcat.wipeSync();
+        napcat.stopSync();
+        log.info('已停止网关进程（保留 napcat/ 目录：卸载清理请走设置页「彻底卸载并清理」）');
       } catch (error) {
-        log.warn(`卸载时清理网关目录失败：${error instanceof Error ? error.message : String(error)}`);
+        log.warn(`卸载时停止网关失败：${error instanceof Error ? error.message : String(error)}`);
       }
     };
   }, 'dsh-pet-qq: 初始化与清理');
