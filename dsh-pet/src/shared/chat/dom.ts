@@ -28,8 +28,8 @@ const USAGE_COLORS: Record<string, string> = {
 function fmtTokens(n: number): string {
   if (!Number.isFinite(n) || n < 0) return '0';
   if (n < 1000) return String(Math.round(n));
-  if (n < 1_000_000) return (Math.round(n / 100) / 10) + 'K';
-  return (Math.round(n / 100_000) / 10) + 'M';
+  if (n < 1_000_000) return Math.round(n / 100) / 10 + 'K';
+  return Math.round(n / 100_000) / 10 + 'M';
 }
 
 /** 提示自动收起的时间（ms）。 */
@@ -176,8 +176,7 @@ export function createChatDom(opts: { capture?: () => Promise<EncodedImage> } = 
       usageBar.appendChild(seg);
       lines.push(`${p.label} ≈${fmtTokens(p.tokens)}`);
     }
-    usageText.textContent =
-      `上下文用量 ${Number.isFinite(u.percent) ? u.percent : 0}% · ≈${fmtTokens(u.total)} / ${fmtTokens(u.window)}（估算）`;
+    usageText.textContent = `上下文用量 ${Number.isFinite(u.percent) ? u.percent : 0}% · ≈${fmtTokens(u.total)} / ${fmtTokens(u.window)}（估算）`;
     usage.title = lines.join('\n');
     usage.style.display = 'block';
   };

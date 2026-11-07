@@ -173,7 +173,8 @@ export function createPacker({ getConfig, getPacksDir, ledger, log }) {
         log.warn(`跳过 ${target.name}：${why}`);
         return { ok: false, skipped: true, reason: why };
       }
-      if (!bin.ok) warnings.push(`没找到 ffmpeg（${bin.reason}），已原样使用源文件；要转 9:16 请装 ffmpeg 并在设置里填路径`);
+      if (!bin.ok)
+        warnings.push(`没找到 ffmpeg（${bin.reason}），已原样使用源文件；要转 9:16 请装 ffmpeg 并在设置里填路径`);
 
       const packsDir = getPacksDir();
       const packId = await uniquePackId(packsDir, target.name, now);
@@ -251,8 +252,11 @@ export function createPacker({ getConfig, getPacksDir, ledger, log }) {
       };
 
       // 先复制再生文件：说明.txt 要如实写「复制成功没有」，顺序反了就只能猜
-      const copied = config.pack.copyCaption ? await copyToClipboard(caption.text) : { ok: false, reason: '未开启自动复制' };
-      if (config.pack.copyCaption && !copied.ok) warnings.push(`文案没能自动进剪贴板（${copied.reason}），手动打开「文案.txt」复制`);
+      const copied = config.pack.copyCaption
+        ? await copyToClipboard(caption.text)
+        : { ok: false, reason: '未开启自动复制' };
+      if (config.pack.copyCaption && !copied.ok)
+        warnings.push(`文案没能自动进剪贴板（${copied.reason}），手动打开「文案.txt」复制`);
 
       await writeFile(join(packDir, '文案.txt'), `${caption.text}\n`, 'utf8');
       await writeFile(join(packDir, 'meta.json'), `${JSON.stringify(pack, null, 2)}\n`, 'utf8');
@@ -303,10 +307,7 @@ export function createPacker({ getConfig, getPacksDir, ledger, log }) {
      * @returns {Promise<object|null>} 更新后的记录
      */
     async mark(id, status) {
-      const entry =
-        ledger.find(id) ??
-        ledger.list(500).find((e) => e.packId === id || e.id === `pk_${id}`) ??
-        null;
+      const entry = ledger.find(id) ?? ledger.list(500).find((e) => e.packId === id || e.id === `pk_${id}`) ?? null;
       if (entry === null) return null;
       return ledger.update(entry.id, { status });
     },

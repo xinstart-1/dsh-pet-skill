@@ -142,9 +142,7 @@ export function parseRecommendList(list) {
  */
 export function topByLikes(items, n) {
   const count = Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
-  return [...(Array.isArray(items) ? items : [])]
-    .sort((a, b) => (b.likesNum ?? 0) - (a.likesNum ?? 0))
-    .slice(0, count);
+  return [...(Array.isArray(items) ? items : [])].sort((a, b) => (b.likesNum ?? 0) - (a.likesNum ?? 0)).slice(0, count);
 }
 
 /**
@@ -181,7 +179,10 @@ export function digestOf(items, opts = {}) {
   const picked = topByLikes(list, max);
   const lines = picked.map((it, i) => {
     const who = String(it.author ?? '').trim();
-    const title = String(it.title ?? '').replace(/\s*#[^\s#]+/g, '').trim().slice(0, 28);
+    const title = String(it.title ?? '')
+      .replace(/\s*#[^\s#]+/g, '')
+      .trim()
+      .slice(0, 28);
     const hot = it.likes === '' ? '' : ` · ${it.likes}赞`;
     return `${i + 1}. ${who === '' ? '' : `@${who} `}${title === '' ? '（无描述）' : title}${hot}`;
   });

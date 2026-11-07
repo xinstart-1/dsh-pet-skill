@@ -64,9 +64,7 @@ export function apply(ctx, deps = {}) {
   // 附件服务（可选）：看图这条路要把截下来的画面存成附件——模型消息里收的是 attachmentId 引用，不是裸字节。
   // 宿主没这个服务（旧版 / 独立模式）时留 null，scanFeed 会自动退回"只读文案"。
   // 用 ctx.get(name, false) 软取：不写进 inject，服务缺失时插件仍然正常 apply。
-  service.setAttachments(
-    typeof ctx?.get === 'function' ? (ctx.get('attachments', false) ?? null) : null,
-  );
+  service.setAttachments(typeof ctx?.get === 'function' ? (ctx.get('attachments', false) ?? null) : null);
 
   // 临时探针：摸清宿主 LLM 能力面（ctx.llm / agentDefaultModel / @deepseek-ai/dsh-llm 可达性与 chunk 形状）。
   // 放在入口是因为只有这里摸得到 cordis ctx；service 与 HTTP 层都不该知道 ctx 的存在。
@@ -101,11 +99,13 @@ export function apply(ctx, deps = {}) {
             provider: sel.provider,
             model: sel.model,
             sessionId: 'dsh-pet-douyin-probe',
-            messages: [{
-              role: 'user',
-              content: [{ type: 'text', text: '只回两个字：通了' }],
-              source: { kind: 'user' },
-            }],
+            messages: [
+              {
+                role: 'user',
+                content: [{ type: 'text', text: '只回两个字：通了' }],
+                source: { kind: 'user' },
+              },
+            ],
             system: '你是测试助手。',
             temperature: 1,
             signal: AbortSignal.timeout(30_000),
@@ -196,7 +196,10 @@ export function apply(ctx, deps = {}) {
         const raw = String(rawInput ?? '').trim();
         const arg = raw.toLowerCase();
         const state = service.state();
-        const who = state.account === null ? '未绑定账号' : `已绑「${state.account.nickname || state.account.openId.slice(0, 6)}」`;
+        const who =
+          state.account === null
+            ? '未绑定账号'
+            : `已绑「${state.account.nickname || state.account.openId.slice(0, 6)}」`;
 
         if (arg === 'list') {
           const grants = state.grants;
@@ -205,8 +208,13 @@ export function apply(ctx, deps = {}) {
             kind: 'success',
             text: grants
               .map((g) => {
-                const caps = Object.keys(g.caps ?? {}).map((c) => CAP_LABEL[c] ?? c).join('、') || '无';
-                const used = g.usage ? `（今日 浏${g.usage.browse}/享${g.usage.share}/信${g.usage.dm}/发${g.usage.publish}）` : '';
+                const caps =
+                  Object.keys(g.caps ?? {})
+                    .map((c) => CAP_LABEL[c] ?? c)
+                    .join('、') || '无';
+                const used = g.usage
+                  ? `（今日 浏${g.usage.browse}/享${g.usage.share}/信${g.usage.dm}/发${g.usage.publish}）`
+                  : '';
                 return `${g.pet}：${caps}${g.alive ? '' : '（已过期）'}${used}`;
               })
               .join('；'),
@@ -271,7 +279,11 @@ export function apply(ctx, deps = {}) {
         if (raw === '' || arg === 'status') {
           void service
             .webStatus()
-            .then((s) => log.info(`/ego-browser：${s.ok === true ? `在线 ${s.browser} · CDP ${s.port} · 抖音标签 ${s.douyinTabs} · ${s.loggedIn ? '已登录' : '未登录'}` : `离线（${s.reason}）`}`))
+            .then((s) =>
+              log.info(
+                `/ego-browser：${s.ok === true ? `在线 ${s.browser} · CDP ${s.port} · 抖音标签 ${s.douyinTabs} · ${s.loggedIn ? '已登录' : '未登录'}` : `离线（${s.reason}）`}`,
+              ),
+            )
             .catch((e) => log.warn(`/ego-browser 状态查询失败：${e instanceof Error ? e.message : String(e)}`));
           const c = service.webStatusCached();
           if (c === null) return { kind: 'success', text: '正在检查专用浏览器…再发一次 /ego-browser 就有结果' };
@@ -284,7 +296,8 @@ export function apply(ctx, deps = {}) {
           };
         }
 
-        const target = arg === 'douyin' ? 'https://www.douyin.com/chat' : arg.startsWith('open ') ? raw.slice(5).trim() : raw;
+        const target =
+          arg === 'douyin' ? 'https://www.douyin.com/chat' : arg.startsWith('open ') ? raw.slice(5).trim() : raw;
         if (!/^https?:\/\//i.test(target)) {
           return { kind: 'error', text: '给一个 http(s) 链接，或者 /ego-browser douyin' };
         }

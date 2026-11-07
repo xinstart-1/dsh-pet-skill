@@ -63,16 +63,24 @@ export function createStore({ paths, log }) {
   let loaded = null;
 
   const persistAccounts = () =>
-    writeJsonAtomic(paths.accountsFile, accounts).catch((e) => log?.warn(`账号落盘失败：${e instanceof Error ? e.message : String(e)}`));
+    writeJsonAtomic(paths.accountsFile, accounts).catch((e) =>
+      log?.warn(`账号落盘失败：${e instanceof Error ? e.message : String(e)}`),
+    );
   const persistGrants = () =>
-    writeJsonAtomic(paths.grantsFile, grants).catch((e) => log?.warn(`授牌落盘失败：${e instanceof Error ? e.message : String(e)}`));
+    writeJsonAtomic(paths.grantsFile, grants).catch((e) =>
+      log?.warn(`授牌落盘失败：${e instanceof Error ? e.message : String(e)}`),
+    );
   const persistAudit = () =>
-    writeJsonAtomic(paths.auditFile, audit).catch((e) => log?.warn(`审计落盘失败：${e instanceof Error ? e.message : String(e)}`));
+    writeJsonAtomic(paths.auditFile, audit).catch((e) =>
+      log?.warn(`审计落盘失败：${e instanceof Error ? e.message : String(e)}`),
+    );
   // 旧测试只传三个文件时，用量就只活在内存里（no-op 落盘），不强行要求新路径
   const persistUsage = () =>
-    (paths.usageFile === undefined
+    paths.usageFile === undefined
       ? Promise.resolve()
-      : writeJsonAtomic(paths.usageFile, usage).catch((e) => log?.warn(`用量落盘失败：${e instanceof Error ? e.message : String(e)}`)));
+      : writeJsonAtomic(paths.usageFile, usage).catch((e) =>
+          log?.warn(`用量落盘失败：${e instanceof Error ? e.message : String(e)}`),
+        );
 
   return {
     /**
@@ -244,7 +252,15 @@ export function createStore({ paths, log }) {
         enabled: extra?.autonomy?.enabled === true,
         perDay: Math.max(1, Math.min(50, Math.round(Number(extra?.autonomy?.perDay)) || 3)),
       };
-      const next = { pet, caps: clean, grantedAt: now, expiresAt, accountOpenId: String(extra?.accountOpenId ?? ''), quota, autonomy };
+      const next = {
+        pet,
+        caps: clean,
+        grantedAt: now,
+        expiresAt,
+        accountOpenId: String(extra?.accountOpenId ?? ''),
+        quota,
+        autonomy,
+      };
       const idx = grants.grants.findIndex((g) => g.pet === pet);
       if (idx >= 0) grants.grants[idx] = next;
       else grants.grants.push(next);
@@ -310,7 +326,12 @@ export function createStore({ paths, log }) {
       const limit = Number(grants.grants.find((x) => x.pet === pet)?.quota?.[cap] ?? 0) || 0;
       const used = (usage.days[dateKey(new Date(now))] ?? {})[`${pet}|${cap}`] ?? 0;
       if (limit > 0 && used >= limit) {
-        return { ok: false, used, limit, reason: `「${pet}」今天的「${CAP_LABEL[cap]}」配额用完了（${used}/${limit}）` };
+        return {
+          ok: false,
+          used,
+          limit,
+          reason: `「${pet}」今天的「${CAP_LABEL[cap]}」配额用完了（${used}/${limit}）`,
+        };
       }
       return { ok: true, used, limit };
     },
@@ -328,7 +349,8 @@ export function createStore({ paths, log }) {
       const field = `${pet}|${cap}`;
       usage.days[key][field] = (usage.days[key][field] ?? 0) + 1;
       const keys = Object.keys(usage.days).sort();
-      if (keys.length > USAGE_KEEP_DAYS) for (const k of keys.slice(0, keys.length - USAGE_KEEP_DAYS)) delete usage.days[k];
+      if (keys.length > USAGE_KEEP_DAYS)
+        for (const k of keys.slice(0, keys.length - USAGE_KEEP_DAYS)) delete usage.days[k];
       await persistUsage();
     },
 
@@ -342,7 +364,8 @@ export function createStore({ paths, log }) {
      * @returns {{ok: boolean, reason?: string}} 判定
      */
     checkGrant(pet, cap, now = Date.now()) {
-      if (typeof pet !== 'string' || pet.trim() === '') return { ok: false, reason: '没带宠物 id（?pet=），无法校验授牌' };
+      if (typeof pet !== 'string' || pet.trim() === '')
+        return { ok: false, reason: '没带宠物 id（?pet=），无法校验授牌' };
       if (!CAPS.includes(cap)) return { ok: false, reason: `未知能力：${cap}` };
       const grant = grants.grants.find((g) => g.pet === pet.trim());
       if (grant === undefined) return { ok: false, reason: `宠物「${pet}」没有授牌` };

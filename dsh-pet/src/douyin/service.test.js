@@ -23,7 +23,8 @@ const silent = { info() {}, warn() {}, error() {}, list: () => [] };
 function mockDouyin() {
   /** @type {string[]} */
   const calls = [];
-  const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
+  const json = (obj, status = 200) =>
+    new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
 
   /** @type {any} */
   const fetchImpl = async (input, init) => {
@@ -45,10 +46,25 @@ function mockDouyin() {
         });
       case '/oauth/refresh_token/':
         return json({
-          data: { access_token: 'act-2', open_id: 'open-1', expires_in: 7200, refresh_token: 'rft-2', refresh_expires_in: 86400, scope: 'user_info video.list', error_code: 0 },
+          data: {
+            access_token: 'act-2',
+            open_id: 'open-1',
+            expires_in: 7200,
+            refresh_token: 'rft-2',
+            refresh_expires_in: 86400,
+            scope: 'user_info video.list',
+            error_code: 0,
+          },
         });
       case '/oauth/userinfo/':
-        return json({ data: { open_id: 'open-1', nickname: '测试号', avatar_larger: { url_list: ['https://cdn/a.jpg'] }, follower_count: 12345 } });
+        return json({
+          data: {
+            open_id: 'open-1',
+            nickname: '测试号',
+            avatar_larger: { url_list: ['https://cdn/a.jpg'] },
+            follower_count: 12345,
+          },
+        });
       case '/api/douyin/v1/video/video_list/':
         return json({
           data: {
@@ -255,10 +271,13 @@ test('JSON 体不被接受时自动改表单重试一次', async () => {
       if (u.pathname === '/oauth/access_token/' && ct.includes('json')) {
         return new Response('bad request', { status: 400 });
       }
-      return new Response(JSON.stringify({ data: { access_token: 'a', open_id: 'o', expires_in: 60, scope: 'user_info' } }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ data: { access_token: 'a', open_id: 'o', expires_in: 60, scope: 'user_info' } }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
     },
     copy: async () => ({ ok: true }),
   });
@@ -266,6 +285,9 @@ test('JSON 体不被接受时自动改表单重试一次', async () => {
   await service.saveConfig({ app: { clientKey: 'k', clientSecret: 's' }, behavior: { throttleMs: 0 } });
   const r = await service.exchangeCode('c');
   assert.equal(r.ok, true, r.reason);
-  assert.ok(seen.some((s) => s.includes('application/x-www-form-urlencoded')), '重试时改用了表单');
+  assert.ok(
+    seen.some((s) => s.includes('application/x-www-form-urlencoded')),
+    '重试时改用了表单',
+  );
   await service.stop();
 });

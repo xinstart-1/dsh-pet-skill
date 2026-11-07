@@ -65,9 +65,7 @@ export function makeRuntimeCard(rt: SettingsRuntime): FunctionComponent {
 
     const rows: ReturnType<typeof h>[] = [];
     if (info.inProcess) {
-      rows.push(
-        h('div', { key: 'ip', className: 'dsh-pet-cfg__note', children: t('runtimeInProcess') }),
-      );
+      rows.push(h('div', { key: 'ip', className: 'dsh-pet-cfg__note', children: t('runtimeInProcess') }));
     } else {
       rows.push(
         h('div', {
@@ -108,7 +106,11 @@ export function makeRuntimeCard(rt: SettingsRuntime): FunctionComponent {
       // 失败原因写在明面：这是「桌面宠物凭空消失」时用户唯一能看到的具体线索。
       if (failed) {
         rows.push(
-          h('div', { key: 'err', className: 'dsh-pet-cfg__note', children: t('runtimeLastError') + info.electron.lastError }),
+          h('div', {
+            key: 'err',
+            className: 'dsh-pet-cfg__note',
+            children: t('runtimeLastError') + info.electron.lastError,
+          }),
         );
       }
       // 未就位（无论有没有失败过）都给一个动作出口 + 日志指引；下载中按钮没有意义，不渲染。
@@ -118,25 +120,22 @@ export function makeRuntimeCard(rt: SettingsRuntime): FunctionComponent {
             key: 'act',
             className: 'dsh-pet-cfg__actions',
             children: [
-              h(
-                'button',
-                {
-                  type: 'button',
-                  className: 'dsh-pet-cfg__btn is-primary is-sm',
-                  onClick: () => {
-                    setBtnFailed(false);
-                    void requestElectronRetry().then((sent) => {
-                      if (sent) {
-                        // 立刻进轮询节奏：不用等 3s，直接拉一次，让「下载中」亮起来。
-                        void loadRuntime().then((next) => {
-                          if (next !== null) setInfo(next);
-                        });
-                      } else setBtnFailed(true);
-                    });
-                  },
-                  children: info.electron.lastError !== null ? t('runtimeRetryBtn') : t('runtimeDownloadBtn'),
+              h('button', {
+                type: 'button',
+                className: 'dsh-pet-cfg__btn is-primary is-sm',
+                onClick: () => {
+                  setBtnFailed(false);
+                  void requestElectronRetry().then((sent) => {
+                    if (sent) {
+                      // 立刻进轮询节奏：不用等 3s，直接拉一次，让「下载中」亮起来。
+                      void loadRuntime().then((next) => {
+                        if (next !== null) setInfo(next);
+                      });
+                    } else setBtnFailed(true);
+                  });
                 },
-              ),
+                children: info.electron.lastError !== null ? t('runtimeRetryBtn') : t('runtimeDownloadBtn'),
+              }),
               btnFailed ? h('span', { className: 'dsh-pet-cfg__msg is-err', children: t('runtimeBtnFailed') }) : null,
             ],
           }),

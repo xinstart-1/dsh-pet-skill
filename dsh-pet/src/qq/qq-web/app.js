@@ -396,8 +396,11 @@
     $('#install-percent').textContent = `${percent}%`;
     const bar = $('#install-bar');
     bar.style.width = `${percent}%`;
-    bar.className = 'progress-fill' + (phase === 'failed' ? ' is-failed' : phase === 'done' ? ' is-done' : running ? ' is-running' : '');
-    $('#install-detail').textContent = napcat?.installDetail || (phase === 'failed' ? napcat?.installError ?? '' : '');
+    bar.className =
+      'progress-fill' +
+      (phase === 'failed' ? ' is-failed' : phase === 'done' ? ' is-done' : running ? ' is-running' : '');
+    $('#install-detail').textContent =
+      napcat?.installDetail || (phase === 'failed' ? (napcat?.installError ?? '') : '');
     // 已耗时（安装中）/ 总耗时提示
     const startedAt = Number(napcat?.installStartedAt ?? 0);
     const elapsed = $('#install-elapsed');
@@ -667,9 +670,7 @@
         ),
     );
 
-    $('#btn-napcat-fetchlatest').addEventListener('click', (event) =>
-      void fetchLatestAction(event.currentTarget),
-    );
+    $('#btn-napcat-fetchlatest').addEventListener('click', (event) => void fetchLatestAction(event.currentTarget));
 
     // 彻底卸载并清理：二次确认（先问意图、再复述后果），确认后才调接口删盘
     $('#btn-uninstall').addEventListener('click', async (event) => {

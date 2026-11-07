@@ -57,7 +57,16 @@ export function dayOf(sec) {
  * @param {{getConfig: () => any, store: any, client: any, ensureToken: () => Promise<any>, log: any, copy?: Function, packer?: any, web?: any}} deps 依赖
  * @returns {object} 能力
  */
-export function createCapabilities({ getConfig, store, client, ensureToken, log, copy = copyToClipboard, packer, web }) {
+export function createCapabilities({
+  getConfig,
+  store,
+  client,
+  ensureToken,
+  log,
+  copy = copyToClipboard,
+  packer,
+  web,
+}) {
   /** 作品列表缓存：`{openId, at, data}` */
   let cache = null;
 
@@ -79,7 +88,8 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
       const err = new Error(gate.reason ?? '没有权限');
       // @ts-expect-error 自定义标记，路由据此返回 403
       err.code = 'no-grant';
-      if (getConfig().behavior.recordAudit) await store.audit({ pet, cap, action: cap, ok: false, detail: gate.reason });
+      if (getConfig().behavior.recordAudit)
+        await store.audit({ pet, cap, action: cap, ok: false, detail: gate.reason });
       throw err;
     }
 
@@ -113,7 +123,13 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
       return result;
     } catch (error) {
       if (getConfig().behavior.recordAudit) {
-        await store.audit({ pet, cap, action: cap, ok: false, detail: error instanceof Error ? error.message : String(error) });
+        await store.audit({
+          pet,
+          cap,
+          action: cap,
+          ok: false,
+          detail: error instanceof Error ? error.message : String(error),
+        });
       }
       throw error;
     }
@@ -143,7 +159,8 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
     const config = getConfig();
     const token = account;
     const scopeOk = token.scope === '' ? true : hasScope(token.scope, SCOPE_OF.videoList);
-    const fresh = cache !== null && cache.openId === token.openId && Date.now() - cache.at < config.behavior.cacheSec * 1000;
+    const fresh =
+      cache !== null && cache.openId === token.openId && Date.now() - cache.at < config.behavior.cacheSec * 1000;
     if (opts.force !== true && fresh) {
       return { items: cache.data.items, account: token, cached: true, scopeOk };
     }
@@ -204,10 +221,11 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
         const config = getConfig();
         const res = await loadVideos(account, {});
         const item =
-          itemId !== undefined && itemId !== ''
-            ? res.items.find((it) => it.itemId === itemId)
-            : res.items[0];
-        if (item === undefined) throw new Error(itemId ? `没找到作品 ${itemId}（可能不在最近 ${res.items.length} 条里）` : '这个账号没有可分享的作品');
+          itemId !== undefined && itemId !== '' ? res.items.find((it) => it.itemId === itemId) : res.items[0];
+        if (item === undefined)
+          throw new Error(
+            itemId ? `没找到作品 ${itemId}（可能不在最近 ${res.items.length} 条里）` : '这个账号没有可分享的作品',
+          );
 
         const text = config.share.template
           .replace(/\{title\}/g, item.title || '未命名作品')
@@ -240,56 +258,61 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
      * @returns {Promise<object>} 结果
      */
     dm: ({ pet, topic = '', to = '', openApp = false }) =>
-      guarded('dm', pet, async () => {
-        const config = getConfig();
-        const lines = [];
-        if (config.dm.greeting.trim() !== '') lines.push(config.dm.greeting.trim());
-        const body = String(topic ?? '').trim();
-        if (body !== '') lines.push(body);
-        else lines.push(`（${config.dm.tone}，你想聊什么就写在这）`);
-        if (config.dm.signature.trim() !== '') lines.push(config.dm.signature.trim());
-        const text = lines.join('\n\n');
+      guarded(
+        'dm',
+        pet,
+        async () => {
+          const config = getConfig();
+          const lines = [];
+          if (config.dm.greeting.trim() !== '') lines.push(config.dm.greeting.trim());
+          const body = String(topic ?? '').trim();
+          if (body !== '') lines.push(body);
+          else lines.push(`（${config.dm.tone}，你想聊什么就写在这）`);
+          if (config.dm.signature.trim() !== '') lines.push(config.dm.signature.trim());
+          const text = lines.join('\n\n');
 
-        const copied = await copy(text);
+          const copied = await copy(text);
 
-        // 打开入口要分两种：装了客户端走 scheme，没装就走网页版消息页。
-        // `spawn` 成功不等于"打开了"——所以不能只看 openUrl 的 ok。
-        let openedVia = '';
-        let openNote = '';
-        if (openApp) {
-          const hasApp = await douyinAppInstalled();
-          const target = hasApp ? DOUYIN_APP : DOUYIN_CHAT;
-          const r = await openUrl(target);
-          if (r.ok) {
-            openedVia = hasApp ? 'app' : 'web';
-            if (!hasApp) openNote = '本机没检测到抖音客户端，已改开网页版消息页（需要浏览器里已登录 douyin.com）';
-          } else {
-            openNote = `打开失败：${r.reason ?? '未知原因'}`;
+          // 打开入口要分两种：装了客户端走 scheme，没装就走网页版消息页。
+          // `spawn` 成功不等于"打开了"——所以不能只看 openUrl 的 ok。
+          let openedVia = '';
+          let openNote = '';
+          if (openApp) {
+            const hasApp = await douyinAppInstalled();
+            const target = hasApp ? DOUYIN_APP : DOUYIN_CHAT;
+            const r = await openUrl(target);
+            if (r.ok) {
+              openedVia = hasApp ? 'app' : 'web';
+              if (!hasApp) openNote = '本机没检测到抖音客户端，已改开网页版消息页（需要浏览器里已登录 douyin.com）';
+            } else {
+              openNote = `打开失败：${r.reason ?? '未知原因'}`;
+            }
           }
-        }
 
-        return {
-          ok: true,
-          pet,
-          to: String(to ?? ''),
-          text,
-          copied,
-          opened: openedVia !== '',
-          openedVia,
-          openNote,
-          channel: 'draft',
-          steps: [
-            openedVia === 'app'
-              ? '抖音客户端已唤起，切到「消息」'
-              : openedVia === 'web'
-                ? '浏览器已打开抖音消息页'
-                : '自己打开抖音（App 或 douyin.com）',
-            to === '' ? '在「消息」里找到要回复的会话' : `在「消息」里找到「${to}」`,
-            '粘贴（草稿已复制到剪贴板），确认措辞后自己点发送',
-          ],
-          note: dmSendSupported().reason,
-        };
-      }, { needAccount: false }),
+          return {
+            ok: true,
+            pet,
+            to: String(to ?? ''),
+            text,
+            copied,
+            opened: openedVia !== '',
+            openedVia,
+            openNote,
+            channel: 'draft',
+            steps: [
+              openedVia === 'app'
+                ? '抖音客户端已唤起，切到「消息」'
+                : openedVia === 'web'
+                  ? '浏览器已打开抖音消息页'
+                  : '自己打开抖音（App 或 douyin.com）',
+              to === '' ? '在「消息」里找到要回复的会话' : `在「消息」里找到「${to}」`,
+              '粘贴（草稿已复制到剪贴板），确认措辞后自己点发送',
+            ],
+            note: dmSendSupported().reason,
+          };
+        },
+        { needAccount: false },
+      ),
 
     /**
      * 做发布包：扫目录 → 转 9:16 → 出发布包（video/文案/说明/封面）。
@@ -323,11 +346,16 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
      * @returns {Promise<object>} 结果
      */
     openFeed: ({ pet, app = false }) =>
-      guarded('browse', pet, async () => {
-        const target = app ? DOUYIN_APP : DOUYIN_WEB;
-        const r = await openUrl(target);
-        return { ok: r.ok, pet, url: target, note: '推荐流没有公开接口，这里只打开页面，不读取任何内容。' };
-      }, { needAccount: false }),
+      guarded(
+        'browse',
+        pet,
+        async () => {
+          const target = app ? DOUYIN_APP : DOUYIN_WEB;
+          const r = await openUrl(target);
+          return { ok: r.ok, pet, url: target, note: '推荐流没有公开接口，这里只打开页面，不读取任何内容。' };
+        },
+        { needAccount: false },
+      ),
 
     /**
      * 刷一刷推荐流（网页通道，只读、不发任何消息）。
@@ -338,13 +366,18 @@ export function createCapabilities({ getConfig, store, client, ensureToken, log,
      * @returns {Promise<object>} `{ok, pet, items, total, opened}`
      */
     feed: ({ pet, limit }) =>
-      guarded('browse', pet, async () => {
-        if (web === undefined) throw new Error('网页通道未装配');
-        const r = await web.readFeed({ limit });
-        if (r.ok !== true) throw new Error(r.reason ?? '刷推荐流失败');
-        const items = parseRecommendList(r.items);
-        return { ok: true, pet, items, total: items.length, opened: r.opened === true };
-      }, { needAccount: false }),
+      guarded(
+        'browse',
+        pet,
+        async () => {
+          if (web === undefined) throw new Error('网页通道未装配');
+          const r = await web.readFeed({ limit });
+          if (r.ok !== true) throw new Error(r.reason ?? '刷推荐流失败');
+          const items = parseRecommendList(r.items);
+          return { ok: true, pet, items, total: items.length, opened: r.opened === true };
+        },
+        { needAccount: false },
+      ),
 
     /** 清掉作品缓存（改了 scope 或换号后调）。 @returns {void} */
     clearCache() {

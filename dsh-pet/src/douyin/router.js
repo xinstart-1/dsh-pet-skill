@@ -173,7 +173,10 @@ export function createRouter({ service, log }) {
       case 'POST /auth/refresh':
         return sendJson(res, 200, await service.refreshNow());
       case 'POST /auth/current':
-        return sendJson(res, 200, { ...(await service.setCurrent(String(body?.openId ?? ''))), state: service.state() });
+        return sendJson(res, 200, {
+          ...(await service.setCurrent(String(body?.openId ?? ''))),
+          state: service.state(),
+        });
       case 'POST /auth/unlink':
         return sendJson(res, 200, { ...(await service.unlink(String(body?.openId ?? ''))), state: service.state() });
 
@@ -203,7 +206,11 @@ export function createRouter({ service, log }) {
         return sendJson(res, 200, await service.browse({ pet, force }));
       }
       case 'POST /share':
-        return sendJson(res, 200, await service.share({ pet: String(body?.pet ?? ''), itemId: body?.itemId, open: body?.open === true }));
+        return sendJson(
+          res,
+          200,
+          await service.share({ pet: String(body?.pet ?? ''), itemId: body?.itemId, open: body?.open === true }),
+        );
       case 'POST /dm':
         return sendJson(
           res,
@@ -218,12 +225,16 @@ export function createRouter({ service, log }) {
       case 'POST /feed':
         return sendJson(res, 200, await service.openFeed({ pet: String(body?.pet ?? ''), app: body?.app === true }));
       case 'POST /feed/scan':
-        return sendJson(res, 200, await service.scanFeed({
-          pet: String(body?.pet ?? ''),
-          limit: body?.limit,
-          share: body?.share,
-          to: body?.to,
-        }));
+        return sendJson(
+          res,
+          200,
+          await service.scanFeed({
+            pet: String(body?.pet ?? ''),
+            limit: body?.limit,
+            share: body?.share,
+            to: body?.to,
+          }),
+        );
       case 'POST /pet-publish':
         return sendJson(res, 200, await service.publish({ pet: String(body?.pet ?? ''), file: body?.file }));
       // 试一句：按当前人设生成回复，不发送（调提示词用）
@@ -252,9 +263,11 @@ export function createRouter({ service, log }) {
       // 宠物对话框里的一句话：pet 的扩展能力位会先问到这里。
       // 立刻回执（claimed + ack），执行放后台——超时预算在 pet 那边只有 1.2s，不能在这里等出结果。
       case 'POST /pet-say':
-        return sendJson(res, 200, await service.petSay({ pet: String(body?.pet ?? ''), text: String(body?.text ?? '') }));
-      case 'GET /pets':
-        return sendJson(res, 200, { ok: true, pets: await service.refreshPets() });
+        return sendJson(
+          res,
+          200,
+          await service.petSay({ pet: String(body?.pet ?? ''), text: String(body?.text ?? '') }),
+        );
       case 'GET /web/status':
         return sendJson(res, 200, await service.webStatus());
       case 'GET /llm-probe':
@@ -272,7 +285,8 @@ export function createRouter({ service, log }) {
       case 'POST /packs/mark': {
         const id = String(body?.id ?? '');
         const status = String(body?.status ?? '');
-        if (!['published', 'skipped', 'packed'].includes(status)) return sendJson(res, 400, { error: '状态只能是 published/skipped/packed' });
+        if (!['published', 'skipped', 'packed'].includes(status))
+          return sendJson(res, 400, { error: '状态只能是 published/skipped/packed' });
         const updated = await service.mark(id, status);
         return sendJson(res, updated === null ? 404 : 200, { ok: updated !== null, entry: updated });
       }
@@ -285,7 +299,9 @@ export function createRouter({ service, log }) {
       case 'POST /caption-preview': {
         const cfg = service.getConfig();
         const captionCfg =
-          body?.caption !== null && typeof body?.caption === 'object' ? normalizeConfig({ caption: body.caption }).config.caption : cfg.caption;
+          body?.caption !== null && typeof body?.caption === 'object'
+            ? normalizeConfig({ caption: body.caption }).config.caption
+            : cfg.caption;
         return sendJson(
           res,
           200,
@@ -326,7 +342,9 @@ export function createRouter({ service, log }) {
    */
   return async function handle(req, res) {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
-    const pathname = url.pathname.startsWith(ROUTE_PREFIX) ? url.pathname.slice(ROUTE_PREFIX.length) || '/' : url.pathname;
+    const pathname = url.pathname.startsWith(ROUTE_PREFIX)
+      ? url.pathname.slice(ROUTE_PREFIX.length) || '/'
+      : url.pathname;
     try {
       if (pathname.startsWith('/api/')) return await handleApi(req, res, pathname, url);
       if (req.method === 'GET' && (await serveStatic(res, pathname))) return;

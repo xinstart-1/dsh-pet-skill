@@ -38,7 +38,10 @@ export async function listVideos(source, hasSeen) {
       skipped,
       total: 0,
       dirExists: false,
-      error: code === 'ENOENT' ? `目录不存在：${dir}` : `读不了目录：${error instanceof Error ? error.message : String(error)}`,
+      error:
+        code === 'ENOENT'
+          ? `目录不存在：${dir}`
+          : `读不了目录：${error instanceof Error ? error.message : String(error)}`,
     };
   }
 
@@ -152,7 +155,17 @@ export async function probeMedia(bin, file) {
   if (bin.ffprobe !== '') {
     const r = await run(
       bin.ffprobe,
-      ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height:format=duration', '-of', 'json', file],
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=width,height:format=duration',
+        '-of',
+        'json',
+        file,
+      ],
       { timeoutMs: 30_000 },
     );
     if (r.code === 0) {
@@ -233,7 +246,9 @@ export async function transcode(bin, transcode, input, output) {
   if (r.code === 0 && (await isFile(output))) return { ok: true };
   return {
     ok: false,
-    reason: (r.timedOut ? '转码超时（30 分钟）' : r.stderr.trim().split('\n').slice(-3).join(' ')) || `ffmpeg 退出码 ${r.code}`,
+    reason:
+      (r.timedOut ? '转码超时（30 分钟）' : r.stderr.trim().split('\n').slice(-3).join(' ')) ||
+      `ffmpeg 退出码 ${r.code}`,
   };
 }
 
@@ -249,7 +264,21 @@ export async function transcode(bin, transcode, input, output) {
 export async function grabCover(bin, input, output, atSec = 1) {
   const r = await run(
     bin.ffmpeg,
-    ['-hide_banner', '-loglevel', 'error', '-y', '-ss', String(atSec), '-i', input, '-frames:v', '1', '-q:v', '3', output],
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-ss',
+      String(atSec),
+      '-i',
+      input,
+      '-frames:v',
+      '1',
+      '-q:v',
+      '3',
+      output,
+    ],
     { timeoutMs: 60_000 },
   );
   return r.code === 0 && (await isFile(output));

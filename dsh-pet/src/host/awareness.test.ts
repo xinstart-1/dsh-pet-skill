@@ -7,7 +7,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { collectWindows, formatAwareness, pickActivePage, pickByVisibility, pickNotableWindows, speakReason, type AwarenessSample } from './awareness.ts';
+import {
+  collectWindows,
+  formatAwareness,
+  pickActivePage,
+  pickByVisibility,
+  pickNotableWindows,
+  speakReason,
+  type AwarenessSample,
+} from './awareness.ts';
 
 test('按可见性挑页面：只有 visible 的那个算数（标签顺序不作数）', () => {
   const pages = [
@@ -15,11 +23,7 @@ test('按可见性挑页面：只有 visible 的那个算数（标签顺序不�
     { title: '抖音-记录美好生活', url: 'https://www.douyin.com/?recommend=1', visible: true },
   ];
   assert.equal(pickByVisibility(pages)?.url, 'https://www.douyin.com/?recommend=1');
-  assert.equal(
-    pickByVisibility(pages.map((p) => ({ ...p, visible: false }))),
-    null,
-    '都不亮就交给启发式兜底',
-  );
+  assert.equal(pickByVisibility(pages.map((p) => ({ ...p, visible: false }))), null, '都不亮就交给启发式兜底');
   assert.equal(pickByVisibility([{ title: 'x', url: 'chrome://settings', visible: true }]), null, '非 http 不算');
 });
 
@@ -185,7 +189,12 @@ test('标题里带文件名（.docx 等）也算"在干活"，优先于聊天软
 });
 
 test('什么都没变就不说话', () => {
-  const prev: AwarenessSample = { at: 0, idleSec: 2, browser: { title: 'a', url: 'https://a.com/1' }, windowTitle: 'W' };
+  const prev: AwarenessSample = {
+    at: 0,
+    idleSec: 2,
+    browser: { title: 'a', url: 'https://a.com/1' },
+    windowTitle: 'W',
+  };
   const same: AwarenessSample = { at: 300_000, idleSec: 4, browser: prev.browser, windowTitle: 'W' };
   assert.equal(speakReason(prev, same).speak, false);
 });

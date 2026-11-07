@@ -51,7 +51,10 @@
    * @returns {string} 转义结果
    */
   const esc = (s) =>
-    String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    String(s ?? '').replace(
+      /[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+    );
 
   /**
    * 弹提示。
@@ -64,9 +67,12 @@
     el.textContent = msg;
     el.className = `toast show ${kind}`;
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => {
-      el.className = 'toast';
-    }, kind === 'err' ? 6500 : 3400);
+    toast.timer = setTimeout(
+      () => {
+        el.className = 'toast';
+      },
+      kind === 'err' ? 6500 : 3400,
+    );
   }
 
   /**
@@ -133,7 +139,7 @@
         const chip = document.createElement('span');
         chip.className = 'chip';
         const label = document.createElement('span');
-        label.textContent = path === 'schedule.weekdays' ? WEEKDAYS[Number(value) - 1] ?? value : value;
+        label.textContent = path === 'schedule.weekdays' ? (WEEKDAYS[Number(value) - 1] ?? value) : value;
         const del = document.createElement('button');
         del.type = 'button';
         del.textContent = '×';
@@ -229,7 +235,10 @@
         setPath(
           out,
           path,
-          el.value.split(',').map((s) => s.trim()).filter(Boolean),
+          el.value
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
         );
         continue;
       }
@@ -241,7 +250,14 @@
       setPath(out, path, el.value);
     }
     for (const el of $$('[data-chips-lines]')) {
-      setPath(out, el.dataset.chipsLines, el.value.split('\n').map((s) => s.trim()).filter(Boolean));
+      setPath(
+        out,
+        el.dataset.chipsLines,
+        el.value
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
     }
     for (const [path, field] of chipFields) setPath(out, path, field.get());
     return out;
@@ -269,7 +285,10 @@
       if (lost > 0) {
         toast(`有 ${lost} 项没存上：插件还没重启（后端不认识这些字段），内容已给你留着，重启后再保存一次`, 'err');
       } else {
-        toast(r.warnings?.length ? `已保存，${r.warnings.length} 处被纠正` : '已保存，立即生效', r.warnings?.length ? 'err' : 'ok');
+        toast(
+          r.warnings?.length ? `已保存，${r.warnings.length} 处被纠正` : '已保存，立即生效',
+          r.warnings?.length ? 'err' : 'ok',
+        );
       }
     } catch (error) {
       $('#save-state').textContent = '保存失败';
@@ -323,15 +342,31 @@
     // 「账号 / 应用凭据 / 读作品」是官方 API 路线的状态，个人号那条路走不通，不再占位置。
     const w = s.config?.web ?? {};
     const cards = [
-      { k: '网页通道', v: w.enabled === false ? '未启用' : `已启用 · 端口 ${w.port}`, cls: w.enabled === false ? 'warn' : 'ok' },
-      { k: '自动回复', v: w.autoReply !== true ? '关' : w.allowAutoSend === true ? '开 · 会替你发送' : '开 · 只写草稿', cls: '' },
+      {
+        k: '网页通道',
+        v: w.enabled === false ? '未启用' : `已启用 · 端口 ${w.port}`,
+        cls: w.enabled === false ? 'warn' : 'ok',
+      },
+      {
+        k: '自动回复',
+        v: w.autoReply !== true ? '关' : w.allowAutoSend === true ? '开 · 会替你发送' : '开 · 只写草稿',
+        cls: '',
+      },
       { k: '监听界面', v: w.surface === 'panel' ? '右侧消息面板' : '专用消息页', cls: '' },
       { k: '今日发布包', v: `${s.ledger.todayCount} / ${s.config.schedule.maxPerDay}`, cls: '' },
-      { k: 'ffmpeg', v: ff.ok ? `可用 ${shortFfmpeg(ff.version)}` : '未找到（原样使用）', cls: ff.ok ? 'ok' : 'warn', sm: true },
+      {
+        k: 'ffmpeg',
+        v: ff.ok ? `可用 ${shortFfmpeg(ff.version)}` : '未找到（原样使用）',
+        cls: ff.ok ? 'ok' : 'warn',
+        sm: true,
+      },
       { k: '授牌', v: `${s.grants.length} 只宠物`, cls: s.grants.length === 0 ? 'warn' : '', sm: true },
     ];
     $('#status-cards').innerHTML = cards
-      .map((c) => `<div class="stat ${c.cls}"><div class="k">${c.k}</div><div class="v ${c.sm ? 'sm' : ''}">${esc(c.v)}</div></div>`)
+      .map(
+        (c) =>
+          `<div class="stat ${c.cls}"><div class="k">${c.k}</div><div class="v ${c.sm ? 'sm' : ''}">${esc(c.v)}</div></div>`,
+      )
       .join('');
     $('#ffmpeg-hint').textContent = ff.ok ? `ffmpeg ${shortFfmpeg(ff.version)}` : `ffmpeg 未找到：${ff.reason ?? ''}`;
     $('#pet-hint').textContent = s.link?.petMenu ? '桌宠已联动' : '等待桌宠';
@@ -361,13 +396,21 @@
         const quota = g?.quota ?? {};
         const usage = g?.usage ?? { browse: 0, share: 0, dm: 0, publish: 0 };
         const auto = g?.autonomy ?? { enabled: false, perDay: 3 };
-        const status = g === undefined ? '<span class="tag off">未授牌</span>' : g.alive ? '<span class="tag on">生效中</span>' : '<span class="tag expired">已过期</span>';
+        const status =
+          g === undefined
+            ? '<span class="tag off">未授牌</span>'
+            : g.alive
+              ? '<span class="tag on">生效中</span>'
+              : '<span class="tag expired">已过期</span>';
         const num = (cap, label) =>
           `<label class="q"><span>${label}</span><input class="input tiny" type="number" min="0" max="999" data-quota="${cap}" value="${quota[cap] > 0 ? quota[cap] : ''}" placeholder="不限" /></label>`;
         return `<tr data-pet="${esc(pet)}">
           <td class="pet">${esc(pet)}</td>
           <td>${(s.caps ?? [])
-            .map((c) => `<label class="cap"><input type="checkbox" data-cap="${c.key}" ${caps[c.key] === true ? 'checked' : ''}/> ${esc(c.label)}</label>`)
+            .map(
+              (c) =>
+                `<label class="cap"><input type="checkbox" data-cap="${c.key}" ${caps[c.key] === true ? 'checked' : ''}/> ${esc(c.label)}</label>`,
+            )
             .join('')}</td>
           <td class="quota">${num('browse', '浏')}${num('share', '享')}${num('dm', '信')}${num('publish', '发')}<div class="hint">今日 浏${usage.browse}/享${usage.share}/信${usage.dm}/发${usage.publish}</div></td>
           <td>
@@ -410,7 +453,10 @@
     }
     body.className = '';
     body.innerHTML = `<table class="cand"><thead><tr><th>文件名</th><th>体积</th><th>修改时间</th></tr></thead><tbody>${r.items
-      .map((it) => `<tr><td class="name" title="${esc(it.path)}">${esc(it.name)}</td><td>${fmtSize(it.size)}</td><td>${fmt(it.mtimeMs)}</td></tr>`)
+      .map(
+        (it) =>
+          `<tr><td class="name" title="${esc(it.path)}">${esc(it.name)}</td><td>${fmtSize(it.size)}</td><td>${fmt(it.mtimeMs)}</td></tr>`,
+      )
       .join('')}</tbody></table>
       ${r.remaining > 0 ? `<p class="tip">还有 ${r.remaining} 条没列出来。</p>` : ''}`;
   }
@@ -477,7 +523,12 @@
       $('#log').textContent =
         entries.length === 0
           ? '还没有日志。'
-          : entries.map((e) => `${new Date(e.t).toLocaleTimeString('zh-CN', { hour12: false })} ${e.level.toUpperCase()} ${e.msg}`).join('\n');
+          : entries
+              .map(
+                (e) =>
+                  `${new Date(e.t).toLocaleTimeString('zh-CN', { hour12: false })} ${e.level.toUpperCase()} ${e.msg}`,
+              )
+              .join('\n');
     } catch {
       /* 日志拿不到不影响别的 */
     }
@@ -490,7 +541,10 @@
     previewTimer = setTimeout(async () => {
       try {
         const cfg = collectForm();
-        const r = await api('/caption-preview', { method: 'POST', body: { caption: cfg.caption, name: '海边日落.mp4', durationSec: 18 } });
+        const r = await api('/caption-preview', {
+          method: 'POST',
+          body: { caption: cfg.caption, name: '海边日落.mp4', durationSec: 18 },
+        });
         $('#caption-preview').textContent = r.text || '（文案是空的）';
         $('#preview-hint').textContent = r.warnings?.length ? r.warnings.join('；') : `${(r.text ?? '').length} 字`;
       } catch (error) {
@@ -518,14 +572,19 @@
     if (sel === null) return;
     const pets = s.pets ?? [];
     const prev = sel.value;
-    sel.innerHTML = (pets.length === 0 ? ['main'] : pets).map((p) => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    sel.innerHTML = (pets.length === 0 ? ['main'] : pets)
+      .map((p) => `<option value="${esc(p)}">${esc(p)}</option>`)
+      .join('');
     if (prev !== '' && pets.includes(prev)) sel.value = prev;
 
     const box = $('#say-examples');
     if (box !== null && box.dataset.done !== '1') {
       box.dataset.done = '1';
       box.innerHTML = (s.examples ?? [])
-        .map((e) => `<button class="btn btn-ghost btn-sm say-eg" data-text="${esc(e.text)}" title="${esc(e.hint)}">${esc(e.text)}</button>`)
+        .map(
+          (e) =>
+            `<button class="btn btn-ghost btn-sm say-eg" data-text="${esc(e.text)}" title="${esc(e.hint)}">${esc(e.text)}</button>`,
+        )
         .join('');
     }
   }
@@ -540,7 +599,9 @@
     if (out === null) return;
     const intent = r.intent ?? {};
     const lines = [];
-    lines.push(`识别：${ACTION_LABEL[intent.action] ?? intent.action}${intent.to ? ` → 「${intent.to}」` : ''}${intent.rule ? `（${intent.rule}）` : ''}`);
+    lines.push(
+      `识别：${ACTION_LABEL[intent.action] ?? intent.action}${intent.to ? ` → 「${intent.to}」` : ''}${intent.rule ? `（${intent.rule}）` : ''}`,
+    );
     if (intent.topic) lines.push(`正文：${intent.topic}`);
     if (Array.isArray(r.items) && r.items.length > 0) {
       for (const c of r.items.slice(0, 6)) lines.push(`· ${c.name} — ${c.last}`);
@@ -722,7 +783,10 @@
         if (r.ok === true && r.mode === 'published') {
           toast(`发出去了：${r.title || '视频'}`, 'ok');
         } else if (r.ok === true) {
-          toast(r.titleSet === true ? '传好了、标题也填了——去浏览器里点「发布」' : '传好了，标题没填上，去浏览器里补一下', 'ok');
+          toast(
+            r.titleSet === true ? '传好了、标题也填了——去浏览器里点「发布」' : '传好了，标题没填上，去浏览器里补一下',
+            'ok',
+          );
         } else {
           toast(`没发成：${r.reason ?? '未知原因'}`, 'err');
         }
@@ -752,7 +816,7 @@
         const r = await api('/say', { method: 'POST', body: { pet: $('#say-pet').value, text: value } });
         showSayResult(r);
         hint.textContent = '';
-        toast(r.ok ? '做完了' : r.reply ?? '没做成', r.ok ? 'ok' : 'err');
+        toast(r.ok ? '做完了' : (r.reply ?? '没做成'), r.ok ? 'ok' : 'err');
         await refresh();
         await loadWebStatus();
       } catch (error) {
@@ -876,7 +940,10 @@
               caps,
               quota,
               ttlHours: Number(row.querySelector('[data-ttl]').value),
-              autonomy: { enabled: row.querySelector('[data-auto]').checked, perDay: Number(row.querySelector('[data-auto-perday]').value) || 3 },
+              autonomy: {
+                enabled: row.querySelector('[data-auto]').checked,
+                perDay: Number(row.querySelector('[data-auto-perday]').value) || 3,
+              },
             },
           });
           toast(r.grant === null ? `已清空「${row.dataset.pet}」` : `已给「${row.dataset.pet}」授牌`, 'ok');

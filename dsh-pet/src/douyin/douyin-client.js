@@ -43,12 +43,19 @@ export class DouyinError extends Error {
  * @param {{clientKey: string, scopes: string[], redirectUri?: string, state?: string, base?: string}} opts 参数
  * @returns {string} 授权地址
  */
-export function buildAuthorizeUrl({ clientKey, scopes, redirectUri, state, base = 'https://open.douyin.com/platform/oauth/connect/' }) {
+export function buildAuthorizeUrl({
+  clientKey,
+  scopes,
+  redirectUri,
+  state,
+  base = 'https://open.douyin.com/platform/oauth/connect/',
+}) {
   const url = new URL(base);
   url.searchParams.set('client_key', clientKey);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', scopes.join(','));
-  if (typeof redirectUri === 'string' && redirectUri.trim() !== '') url.searchParams.set('redirect_uri', redirectUri.trim());
+  if (typeof redirectUri === 'string' && redirectUri.trim() !== '')
+    url.searchParams.set('redirect_uri', redirectUri.trim());
   if (typeof state === 'string' && state !== '') url.searchParams.set('state', state);
   return url.toString();
 }
@@ -91,7 +98,8 @@ export function hasScope(scopeText, need) {
  * @returns {{code: number, detail: string}} 错误信息（code 0 表示成功）
  */
 export function readError(json) {
-  const node = json !== null && typeof json === 'object' && json.data !== null && typeof json.data === 'object' ? json.data : json;
+  const node =
+    json !== null && typeof json === 'object' && json.data !== null && typeof json.data === 'object' ? json.data : json;
   const code = Number(node?.error_code ?? node?.err_no ?? 0);
   const detail = String(node?.description ?? node?.desc ?? json?.message ?? '');
   return { code: Number.isFinite(code) ? code : 0, detail };
@@ -147,11 +155,12 @@ export function createDouyinClient({ fetchImpl, now = () => Date.now() } = {}) {
       return { res, parsed, raw };
     };
 
-    const { res, parsed, raw } = json !== undefined
-      ? await send(JSON.stringify(json), 'application/json')
-      : form !== undefined
-        ? await send(new URLSearchParams(form).toString(), 'application/x-www-form-urlencoded')
-        : await send(undefined, undefined);
+    const { res, parsed, raw } =
+      json !== undefined
+        ? await send(JSON.stringify(json), 'application/json')
+        : form !== undefined
+          ? await send(new URLSearchParams(form).toString(), 'application/x-www-form-urlencoded')
+          : await send(undefined, undefined);
 
     const { code, detail } = parsed === null ? { code: 0, detail: '' } : readError(parsed);
     if (res.status >= 400 || code !== 0) {
@@ -168,7 +177,11 @@ export function createDouyinClient({ fetchImpl, now = () => Date.now() } = {}) {
       });
     }
     if (parsed === null) {
-      throw new DouyinError(`成功状态但返回不是 JSON（端点 ${path}）`, { httpStatus: res.status, endpoint: path, detail: raw.slice(0, 200) });
+      throw new DouyinError(`成功状态但返回不是 JSON（端点 ${path}）`, {
+        httpStatus: res.status,
+        endpoint: path,
+        detail: raw.slice(0, 200),
+      });
     }
     return parsed;
   }
@@ -204,7 +217,10 @@ export function createDouyinClient({ fetchImpl, now = () => Date.now() } = {}) {
           retryForm: true,
         });
         const d = normalizeToken(json);
-        if (d.accessToken === '' || d.openId === '') throw new DouyinError('授权成功但返回里没有 access_token / open_id', { detail: JSON.stringify(json).slice(0, 200) });
+        if (d.accessToken === '' || d.openId === '')
+          throw new DouyinError('授权成功但返回里没有 access_token / open_id', {
+            detail: JSON.stringify(json).slice(0, 200),
+          });
         return d;
       });
     },

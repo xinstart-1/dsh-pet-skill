@@ -95,11 +95,11 @@ before(() => {
     on: () => noop,
     webServer: {
       // 只接管桌宠自己的前缀：dsh-pet 现在把抖音也装进来了，它的路由也走同一个 register，
-  // 无条件覆盖会让被测的 pet 路由全变成“抖音的 404”
-  register: (spec: { path?: string; handler: typeof handler }) => {
-    if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler;
-    return noop;
-  },
+      // 无条件覆盖会让被测的 pet 路由全变成“抖音的 404”
+      register: (spec: { path?: string; handler: typeof handler }) => {
+        if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler;
+        return noop;
+      },
     },
     commands: { register: () => noop },
     logger: { warn: () => {}, info: () => {}, debug: () => {}, error: () => {} },

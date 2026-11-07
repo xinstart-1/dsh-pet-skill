@@ -321,7 +321,12 @@ function normalizeField(field, raw) {
       return typeof raw === 'string' ? { value: expandPath(raw) } : fb('应当是路径文本，已用默认值');
     case 'int':
     case 'num': {
-      const loose = typeof raw === 'number' ? raw : field.t === 'int' ? Number.parseInt(String(raw), 10) : Number.parseFloat(String(raw));
+      const loose =
+        typeof raw === 'number'
+          ? raw
+          : field.t === 'int'
+            ? Number.parseInt(String(raw), 10)
+            : Number.parseFloat(String(raw));
       if (!Number.isFinite(loose)) return fb('不是有效数字，已用默认值');
       const lo = Number.isFinite(field.min) ? /** @type {number} */ (field.min) : Number.NEGATIVE_INFINITY;
       const hi = Number.isFinite(field.max) ? /** @type {number} */ (field.max) : Number.POSITIVE_INFINITY;
@@ -335,7 +340,9 @@ function normalizeField(field, raw) {
         : fb(`只能是 ${(field.values ?? []).join(' / ')}，已用默认值`);
     case 'str[]': {
       if (!Array.isArray(raw)) return fb('应当是数组，已用默认值');
-      const value = Array.from(new Set(raw.filter((v) => typeof v === 'string' && v.trim() !== '').map((v) => v.trim())));
+      const value = Array.from(
+        new Set(raw.filter((v) => typeof v === 'string' && v.trim() !== '').map((v) => v.trim())),
+      );
       return raw.length > 0 && value.length === 0 ? fb('没有有效项，已用默认值') : { value };
     }
     case 'ext[]': {
@@ -368,7 +375,9 @@ function normalizeField(field, raw) {
     }
     case 'hhmm[]': {
       if (!Array.isArray(raw)) return fb('应当是数组，已用默认值');
-      const value = Array.from(new Set(raw.filter((v) => typeof v === 'string' && HHMM_RE.test(v.trim())).map((v) => v.trim()))).sort();
+      const value = Array.from(
+        new Set(raw.filter((v) => typeof v === 'string' && HHMM_RE.test(v.trim())).map((v) => v.trim())),
+      ).sort();
       return raw.length > 0 && value.length === 0 ? fb('没有合法 HH:MM，已用默认值') : { value };
     }
     case 'range[]': {

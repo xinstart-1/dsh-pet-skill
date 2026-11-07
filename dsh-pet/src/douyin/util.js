@@ -206,9 +206,7 @@ export async function copyToClipboard(text) {
   if (process.platform === 'win32') {
     const b64 = Buffer.from(value, 'utf8').toString('base64');
     const script =
-      'Set-Clipboard -Value ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(' +
-      `'${b64}'` +
-      ')))';
+      'Set-Clipboard -Value ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(' + `'${b64}'` + ')))';
     const ps = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
       timeoutMs: 15_000,
     });

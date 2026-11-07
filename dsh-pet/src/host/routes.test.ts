@@ -110,7 +110,12 @@ before(() => {
       return noop;
     },
     on: () => noop,
-    webServer: { register: (spec: { path?: string; handler: typeof handler }) => { if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler; return noop; } },
+    webServer: {
+      register: (spec: { path?: string; handler: typeof handler }) => {
+        if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler;
+        return noop;
+      },
+    },
     commands: { register: () => noop },
     logger: { warn: () => {}, info: () => {}, debug: () => {}, error: () => {} },
     // 固定返回一个"没登记余额接口"的服务商：POST /balance 的路径因此是确定的

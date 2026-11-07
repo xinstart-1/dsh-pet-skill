@@ -73,11 +73,7 @@ export interface PetSystemInput {
  * 拼装内容 = composeSystemPrompt（人设正文 + 名字声明 + 时间背景 + 环境感知）；
  * `now` 缺省取当前时刻（估算与真实生成同一口径，都按"这一次请求"现算）。
  */
-export function petSystemText(
-  found: PetSystemInput,
-  awareness: string,
-  now: Date = new Date(),
-): string {
+export function petSystemText(found: PetSystemInput, awareness: string, now: Date = new Date()): string {
   return composeSystemPrompt({
     prompt: petPersona(found.conf, found.pet),
     name: String(found.pet.name ?? ''),

@@ -23,19 +23,36 @@ const silent = { info() {}, warn() {}, error() {}, list: () => [] };
 function mockDouyin() {
   /** @type {string[]} */
   const tokens = [];
-  const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
+  const json = (obj, status = 200) =>
+    new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
   /** @type {any} */
   const fetchImpl = async (input, init) => {
     const u = new URL(String(input));
     if (u.pathname === '/oauth/access_token/') {
-      return json({ data: { access_token: 'act-first', open_id: 'open-1', expires_in: 7200, refresh_token: 'r1', refresh_expires_in: 86400, scope: 'user_info video.list' } });
+      return json({
+        data: {
+          access_token: 'act-first',
+          open_id: 'open-1',
+          expires_in: 7200,
+          refresh_token: 'r1',
+          refresh_expires_in: 86400,
+          scope: 'user_info video.list',
+        },
+      });
     }
     if (u.pathname === '/oauth/userinfo/') {
       return json({ data: { open_id: 'open-1', nickname: '大号', avatar_larger: { url_list: [] } } });
     }
     if (u.pathname === '/api/douyin/v1/video/video_list/') {
       tokens.push(String(init?.headers?.['access-token'] ?? ''));
-      return json({ data: { list: [{ item_id: 'v1', title: '一条作品', share_url: 'https://v.douyin.com/x/', statistics: { play_count: 1 } }], has_more: false } });
+      return json({
+        data: {
+          list: [
+            { item_id: 'v1', title: '一条作品', share_url: 'https://v.douyin.com/x/', statistics: { play_count: 1 } },
+          ],
+          has_more: false,
+        },
+      });
     }
     return json({ message: 'not found' }, 404);
   };
@@ -71,11 +88,14 @@ test('配额在能力层生效：第 2 次直接被拒，且标成 quota', async
   assert.equal(first.count, 1);
   assert.equal(service.store.usageOf('main').browse, 1);
 
-  await assert.rejects(() => service.browse({ pet: 'main', force: true }), (error) => {
-    assert.equal(/** @type {any} */ (error).code, 'quota');
-    assert.match(error.message, /配额用完/);
-    return true;
-  });
+  await assert.rejects(
+    () => service.browse({ pet: 'main', force: true }),
+    (error) => {
+      assert.equal(/** @type {any} */ (error).code, 'quota');
+      assert.match(error.message, /配额用完/);
+      return true;
+    },
+  );
   assert.equal(service.store.usageOf('main').browse, 1, '被拒的那次不该计数');
 });
 
@@ -89,16 +109,27 @@ test('失败不消耗配额：抖音报错时用量不变', async () => {
     fetchImpl: async (input) => {
       const u = new URL(String(input));
       if (u.pathname === '/oauth/access_token/') {
-        return new Response(JSON.stringify({ data: { access_token: 'a', open_id: 'o', expires_in: 7200, scope: 'user_info video.list' } }), {
+        return new Response(
+          JSON.stringify({
+            data: { access_token: 'a', open_id: 'o', expires_in: 7200, scope: 'user_info video.list' },
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        );
+      }
+      if (u.pathname === '/oauth/userinfo/') {
+        return new Response(JSON.stringify({ data: { open_id: 'o', nickname: 'x' } }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
         });
       }
-      if (u.pathname === '/oauth/userinfo/') {
-        return new Response(JSON.stringify({ data: { open_id: 'o', nickname: 'x' } }), { status: 200, headers: { 'content-type': 'application/json' } });
-      }
       calls += 1;
-      return new Response(JSON.stringify({ data: { error_code: 2190007, description: '接口调用超限' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      return new Response(JSON.stringify({ data: { error_code: 2190007, description: '接口调用超限' } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     },
     copy: async () => ({ ok: true }),
   });

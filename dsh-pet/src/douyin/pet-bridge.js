@@ -162,13 +162,17 @@ export function createPetBridge({ getPort, log }) {
    * @returns {Promise<boolean>} 是否真的注册上了
    */
   async function registerMenu(labels) {
-    const clean = (Array.isArray(labels) ? labels : []).map((l) => String(l).trim()).filter(Boolean).slice(0, 20);
+    const clean = (Array.isArray(labels) ? labels : [])
+      .map((l) => String(l).trim())
+      .filter(Boolean)
+      .slice(0, 20);
     if (clean.length === 0) return false;
     const r = await call('/menu/item', { method: 'POST', body: { owner: OWNER, labels: clean, target: 'both' } });
     if (!isBusinessOk(r)) {
       menuReady = false;
       menuAttempts += 1;
-      const why = r.error ?? (typeof r.data === 'object' && r.data !== null ? r.data.message ?? r.data.reason : r.status);
+      const why =
+        r.error ?? (typeof r.data === 'object' && r.data !== null ? (r.data.message ?? r.data.reason) : r.status);
       if (menuAttempts <= 2) {
         // 启动竞态：本插件往往比 dsh-pet 先 apply，第一次 404 不代表装坏了
         log.info(`右键菜单暂未挂上（${why ?? '未知'}），轮询会继续重试`);
@@ -214,7 +218,11 @@ export function createPetBridge({ getPort, log }) {
     const body = { ttlMs };
     if (lock !== null && lock.pet === pet) body.lockId = lock.lockId;
     // surface 必填（web/desktop/both/any）：落地在桌面或网页端都能播，用 any 最省事
-    const r = await call(`/lock?pet=${encodeURIComponent(pet)}&surface=any`, { method: 'POST', body, timeoutMs: 12_000 });
+    const r = await call(`/lock?pet=${encodeURIComponent(pet)}&surface=any`, {
+      method: 'POST',
+      body,
+      timeoutMs: 12_000,
+    });
     if (isBusinessOk(r) && typeof r.data?.lockId === 'string') {
       lock = { pet, lockId: r.data.lockId };
       return true;
@@ -243,7 +251,11 @@ export function createPetBridge({ getPort, log }) {
     if (lock === null) return;
     const { pet, lockId } = lock;
     lock = null;
-    await call(`/lock/release?pet=${encodeURIComponent(pet)}&surface=any`, { method: 'POST', body: { lockId }, timeoutMs: 5000 });
+    await call(`/lock/release?pet=${encodeURIComponent(pet)}&surface=any`, {
+      method: 'POST',
+      body: { lockId },
+      timeoutMs: 5000,
+    });
   }
 
   return {
@@ -337,7 +349,10 @@ export function createPetBridge({ getPort, log }) {
         if (!(await acquire(pet))) return false;
       }
       try {
-        const body = { text: String(text).slice(0, 200), durationSec: Math.min(60, Math.max(6, String(text).length * 0.4)) };
+        const body = {
+          text: String(text).slice(0, 200),
+          durationSec: Math.min(60, Math.max(6, String(text).length * 0.4)),
+        };
         if (opts.anim) body.anim = opts.anim;
         const r = await call(withPet('/broadcast', pet), { method: 'POST', body });
         return isBusinessOk(r);

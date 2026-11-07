@@ -6,7 +6,15 @@
  */
 import { findPetInstance, flattenPetList, readAllConfig } from '../config.ts';
 import { automaticWhisperSchedule } from '../whisper-policy.ts';
-import { collectAwareness, collectWindows, pickNotableWindows, rememberAwareness, speakReason, type AwarenessSample, type Runner } from '../awareness.ts';
+import {
+  collectAwareness,
+  collectWindows,
+  pickNotableWindows,
+  rememberAwareness,
+  speakReason,
+  type AwarenessSample,
+  type Runner,
+} from '../awareness.ts';
 import { execFile } from 'node:child_process';
 
 /**

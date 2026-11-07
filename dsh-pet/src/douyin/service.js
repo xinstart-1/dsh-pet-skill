@@ -39,7 +39,16 @@ const TOKEN_SKEW_MS = 60_000;
  * @param {{home: string, log: object, getPort: () => number, fetchImpl?: typeof fetch, copy?: Function, mock?: boolean, now?: () => number}} deps 依赖
  * @returns {object} 服务
  */
-export function createService({ home, log, getPort, fetchImpl, copy = copyToClipboard, open = openUrl, mock = false, now = () => Date.now() }) {
+export function createService({
+  home,
+  log,
+  getPort,
+  fetchImpl,
+  copy = copyToClipboard,
+  open = openUrl,
+  mock = false,
+  now = () => Date.now(),
+}) {
   const dir = pluginDir(home);
   const paths = pathsFor(dir);
   const store = createStore({ paths, log });
@@ -91,7 +100,7 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
   /** 宿主 LLM（入口注入；null = 宿主没提供 llm 服务） */
   let hostLlm = null;
   /** 附件服务（看图要存成附件，模型收的是引用）；宿主没有就 null → 退回只读文案 */
-  let attachments = null;  /** 宿主递来的人设取用函数（进程内直取）；null = 宿主没给，走 HTTP 兜底 */
+  let attachments = null; /** 宿主递来的人设取用函数（进程内直取）；null = 宿主没给，走 HTTP 兜底 */
   let personaProvider = null;
 
   /** 上一次网页通道探测结果（同步给命令用的缓存；探测本身是异步的） */
@@ -360,7 +369,10 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         // Client Secret 不回传页面：留空 = 不改动
         const incoming = JSON.parse(JSON.stringify(patch ?? {}));
         const current = service.getConfig();
-        if (incoming?.app !== undefined && (incoming.app.clientSecret === undefined || incoming.app.clientSecret === '')) {
+        if (
+          incoming?.app !== undefined &&
+          (incoming.app.clientSecret === undefined || incoming.app.clientSecret === '')
+        ) {
           incoming.app.clientSecret = current.app.clientSecret;
         }
         const result = await saveConfig(paths, incoming);
@@ -536,14 +548,22 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
       if (id === '') return { ok: false, reason: '宠物 id 不能为空' };
       const clean = Object.fromEntries(CAPS.filter((c) => caps?.[c] === true).map((c) => [c, true]));
       const bound = String(accountOpenId ?? '').trim();
-      if (bound !== '' && store.findAccount(bound) === null) return { ok: false, reason: `绑定的账号不存在（${bound}）` };
+      if (bound !== '' && store.findAccount(bound) === null)
+        return { ok: false, reason: `绑定的账号不存在（${bound}）` };
       if (Object.keys(clean).length === 0) {
         await store.revokeGrant(id);
         return { ok: true, grant: null };
       }
       const grant = await store.setGrant(id, clean, Number(ttlHours) || 0, { accountOpenId: bound, quota, autonomy });
       if (service.getConfig().behavior.recordAudit) {
-        await store.audit({ pet: id, action: 'grant', ok: true, detail: Object.keys(clean).map((c) => CAP_LABEL[c]).join('、') });
+        await store.audit({
+          pet: id,
+          action: 'grant',
+          ok: true,
+          detail: Object.keys(clean)
+            .map((c) => CAP_LABEL[c])
+            .join('、'),
+        });
       }
       log.info(`已给宠物 ${id} 授牌：${Object.keys(clean).join(',')}`);
       return { ok: true, grant };
@@ -807,7 +827,8 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         if (target === '') return { ok: false, pet: id, reason: '没指定发给谁（要给一个抖音昵称）' };
         const text = shareTextOf(topByLikes(items, 1)[0]);
         const sent = await web.sendMessage({ to: target, text });
-        if (sent.ok !== true) return { ok: false, pet: id, mode, total: items.length, text, reason: sent.reason ?? '没发出去' };
+        if (sent.ok !== true)
+          return { ok: false, pet: id, mode, total: items.length, text, reason: sent.reason ?? '没发出去' };
         return { ok: true, pet: id, mode, total: items.length, items, text, sent: { ok: true, to: target } };
       }
 
@@ -860,7 +881,16 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         else log.warn(`刷推荐流的点评生成失败，用模板摘要顶上：${r?.reason ?? '空正文'}`);
       }
       await say(text, { pet: id, anim: cfg.pet.animOnDone });
-      return { ok: true, pet: id, mode: 'notify', total: items.length, items, text, frames, via: text === fallback ? 'template' : 'host-llm' };
+      return {
+        ok: true,
+        pet: id,
+        mode: 'notify',
+        total: items.length,
+        items,
+        text,
+        frames,
+        via: text === fallback ? 'template' : 'host-llm',
+      };
     },
 
     /**
@@ -951,7 +981,7 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
             reason: e instanceof Error ? e.message : String(e),
           }));
           sent = sendResult.ok === true;
-          await audit('dm', sent, `send→${intent.to} ${sent ? '已核对' : sendResult.reason ?? '失败'}`);
+          await audit('dm', sent, `send→${intent.to} ${sent ? '已核对' : (sendResult.reason ?? '失败')}`);
         }
 
         const reply = sent
@@ -960,7 +990,9 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
               `草稿已复制（收件人「${intent.to}」）`,
               found !== null ? `会话在，最后一条：「${found.last}」` : chatNote,
               autoOk ? `自动发送没成功：${sendResult?.reason ?? '未知原因'}` : '',
-              focused.ok === true ? '窗口已切到消息页：点会话 → 粘贴 → 你点发送' : '专用浏览器没连上，已改为打开网页版消息页',
+              focused.ok === true
+                ? '窗口已切到消息页：点会话 → 粘贴 → 你点发送'
+                : '专用浏览器没连上，已改为打开网页版消息页',
               autoOk ? '' : '自动发送没开（设置页 → 账号 → 网页通道）；开着我就直接发。',
             ]
               .filter((x) => typeof x === 'string' && x !== '')
@@ -995,12 +1027,17 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
           return { ...base, ok: false, reply: read.reason ?? '读不到会话', needWeb: true };
         }
         const target = read.to;
-        const last = Array.isArray(read.incoming) && read.incoming.length > 0 ? read.incoming[read.incoming.length - 1] : '';
+        const last =
+          Array.isArray(read.incoming) && read.incoming.length > 0 ? read.incoming[read.incoming.length - 1] : '';
         // 用户亲手给的正文原样发（那是用户的话，不加工）；没给正文才让大模型现写
         const composed =
           intent.topic.trim() !== ''
             ? { ok: true, text: intent.topic, via: 'user' }
-            : await composeReply({ peer: target, incoming: Array.isArray(read.incoming) ? read.incoming : [], pet: id });
+            : await composeReply({
+                peer: target,
+                incoming: Array.isArray(read.incoming) ? read.incoming : [],
+                pet: id,
+              });
         if (composed.ok !== true) {
           // 没有模板兜底：模型没出正文就不发，如实报原因（发模板腔比不发更糟）
           await audit('dm', false, `reply 未生成 ${composed.error ?? ''}`);
@@ -1022,7 +1059,7 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         }));
         const sent = sendResult.ok === true;
         if (sent) await store.recordUse(id, 'dm');
-        await audit('dm', sent, `reply(${composed.via})→${target} ${sent ? '已核对' : sendResult.reason ?? '失败'}`);
+        await audit('dm', sent, `reply(${composed.via})→${target} ${sent ? '已核对' : (sendResult.reason ?? '失败')}`);
 
         const replyMsg = sent
           ? [
@@ -1031,7 +1068,16 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
             ].join('；')
           : `回复没发出去：${sendResult.reason ?? '未知原因'}`;
 
-        return { ...base, action: 'reply', to: target, lastIncoming: last, sent, replyVia: composed.via, sendResult, reply: replyMsg };
+        return {
+          ...base,
+          action: 'reply',
+          to: target,
+          lastIncoming: last,
+          sent,
+          replyVia: composed.via,
+          sendResult,
+          reply: replyMsg,
+        };
       }
 
       if (intent.action === 'chats') {
@@ -1051,7 +1097,11 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         const reply =
           items.length === 0
             ? '会话列表是空的。'
-            : `有 ${items.length} 个会话：` + items.slice(0, 6).map((c) => `${c.name}（${c.last}）`).join('；');
+            : `有 ${items.length} 个会话：` +
+              items
+                .slice(0, 6)
+                .map((c) => `${c.name}（${c.last}）`)
+                .join('；');
         return { ...base, action: 'chats', reply, items };
       }
 
@@ -1140,7 +1190,9 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
       void service
         .say({ pet: id, text: clean })
         .then((r) => {
-          log.info(`宠物对话执行完成（${id}）：${r.ok === true ? 'ok' : r.reason ?? 'fail'}，回执 ${String(r.reply ?? '').slice(0, 30)}`);
+          log.info(
+            `宠物对话执行完成（${id}）：${r.ok === true ? 'ok' : (r.reason ?? 'fail')}，回执 ${String(r.reply ?? '').slice(0, 30)}`,
+          );
           return announceResult(r.reply);
         })
         .catch((e) => {
@@ -1201,9 +1253,15 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
       const auto = autoPublish === undefined ? service.getConfig().web.autoPublish === true : autoPublish === true;
 
       const r = await web.publishVideo({ file: target, title: text, autoPublish: auto });
-      const mode = r.ok === true ? r.mode ?? 'ready' : 'fail';
+      const mode = r.ok === true ? (r.mode ?? 'ready') : 'fail';
       await store
-        .audit({ pet: id, cap: 'publish', action: 'webpublish', ok: r.ok === true, detail: `${mode} ${target.split(/[\\/]/).pop() ?? ''}${text === '' ? '' : ' / ' + text.slice(0, 20)}` })
+        .audit({
+          pet: id,
+          cap: 'publish',
+          action: 'webpublish',
+          ok: r.ok === true,
+          detail: `${mode} ${target.split(/[\\/]/).pop() ?? ''}${text === '' ? '' : ' / ' + text.slice(0, 20)}`,
+        })
         .catch(() => {});
 
       // 结果必达（与对话认领同一条规矩：用户下的指令有了结果就得说一声）。
@@ -1212,7 +1270,10 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
         if (r.ok === true && mode === 'published') {
           await sayAlways(`发出去了：${text === '' ? '视频' : text}`, { pet: id });
         } else if (r.ok === true) {
-          await sayAlways(r.titleSet === true ? '视频传好了，标题也填了，去点「发布」吧～' : '视频传好了，标题没填上，你去看看再发', { pet: id });
+          await sayAlways(
+            r.titleSet === true ? '视频传好了，标题也填了，去点「发布」吧～' : '视频传好了，标题没填上，你去看看再发',
+            { pet: id },
+          );
         } else {
           await sayAlways(`没发成：${String(r.reason ?? '').slice(0, 60)}`, { pet: id });
         }
@@ -1244,7 +1305,9 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
     async webStatus() {
       const st = await web.status();
       const result =
-        st.ok !== true ? { ...st, checkedAt: now() } : { ...st, loggedIn: (await web.loginState()).loggedIn === true, port: web.port(), checkedAt: now() };
+        st.ok !== true
+          ? { ...st, checkedAt: now() }
+          : { ...st, loggedIn: (await web.loginState()).loggedIn === true, port: web.port(), checkedAt: now() };
       lastWebStatus = result;
       return result;
     },
@@ -1335,7 +1398,13 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
       const tick = async () => {
         const cfg = service.getConfig();
         if (cfg.behavior.autonomyEnabled !== true) return;
-        const decisions = decideAutonomy(cfg.behavior, store.listGrants(now()), (pet2) => store.usageOf(pet2, now()), new Date(now()), lastAutonomyAt);
+        const decisions = decideAutonomy(
+          cfg.behavior,
+          store.listGrants(now()),
+          (pet2) => store.usageOf(pet2, now()),
+          new Date(now()),
+          lastAutonomyAt,
+        );
         for (const d of decisions) {
           if (!d.run) continue;
           lastAutonomyAt[d.pet] = now();
@@ -1420,7 +1489,9 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
           }
 
           // ② 读焦点会话的入站气泡（列表触发过的会话此刻会被精确点开）
-          const r = await web.readIncoming(autoPeer !== '' ? { to: autoPeer } : {}).catch((e) => ({ ok: false, reason: e instanceof Error ? e.message : String(e) }));
+          const r = await web
+            .readIncoming(autoPeer !== '' ? { to: autoPeer } : {})
+            .catch((e) => ({ ok: false, reason: e instanceof Error ? e.message : String(e) }));
           if (r.ok !== true) {
             warnQuiet('read', `自动回复暂停：${r.reason ?? '读不到当前会话'}`);
             return;
@@ -1449,7 +1520,8 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
           // 群聊仅监听：电脑端（网页/桌面客户端）发出的群消息其他成员收不到（平台投递
           // 策略，2026-10-28 真机对照），发出去等于白发——跳过回复但照常更新快照。
           if (autoGroup[peer] === true && w.replyGroups !== true) {
-            if (fresh.length > 0) log.info(`群聊仅监听：${peer} 的 ${fresh.length} 条新消息不自动回复（web.replyGroups=false）`);
+            if (fresh.length > 0)
+              log.info(`群聊仅监听：${peer} 的 ${fresh.length} 条新消息不自动回复（web.replyGroups=false）`);
             return;
           }
           for (const t of fresh) {
@@ -1459,20 +1531,36 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
               // 只走大模型：生成不出来就不发（不留模板兜底），但照常记账，方便查是模型挂了还是没配
               if (cfg.behavior.recordAudit === true) {
                 await store
-                  .audit({ pet: 'auto', cap: 'dm', action: 'auto-reply', ok: false, detail: `${peer}「${t.slice(0, 30)}」→未生成：${composed.error ?? '未知原因'}` })
+                  .audit({
+                    pet: 'auto',
+                    cap: 'dm',
+                    action: 'auto-reply',
+                    ok: false,
+                    detail: `${peer}「${t.slice(0, 30)}」→未生成：${composed.error ?? '未知原因'}`,
+                  })
                   .catch(() => {});
               }
               log.warn(`自动回复跳过 ${peer}：未生成正文（${composed.error ?? '未知原因'}）`);
               continue;
             }
-            const sr = await web.sendMessage({ to: peer, text: composed.text }).catch((e) => ({ ok: false, reason: e instanceof Error ? e.message : String(e) }));
+            const sr = await web
+              .sendMessage({ to: peer, text: composed.text })
+              .catch((e) => ({ ok: false, reason: e instanceof Error ? e.message : String(e) }));
             if (sr.ok === true) autoSent[peer] = composed.text;
             if (cfg.behavior.recordAudit === true) {
               await store
-                .audit({ pet: 'auto', cap: 'dm', action: 'auto-reply', ok: sr.ok === true, detail: `${peer}「${t.slice(0, 30)}」→(${composed.via}) ${sr.ok === true ? '已核对' : sr.reason}` })
+                .audit({
+                  pet: 'auto',
+                  cap: 'dm',
+                  action: 'auto-reply',
+                  ok: sr.ok === true,
+                  detail: `${peer}「${t.slice(0, 30)}」→(${composed.via}) ${sr.ok === true ? '已核对' : sr.reason}`,
+                })
                 .catch(() => {});
             }
-            log.info(`自动回复 ${peer}（${composed.via}/${sr.method ?? 'enter'}）：${sr.ok === true ? `已发「${composed.text.slice(0, 30)}」` : `失败（${sr.reason}）`}`);
+            log.info(
+              `自动回复 ${peer}（${composed.via}/${sr.method ?? 'enter'}）：${sr.ok === true ? `已发「${composed.text.slice(0, 30)}」` : `失败（${sr.reason}）`}`,
+            );
           }
         } catch (error) {
           log.warn(`自动回复轮询出错：${error instanceof Error ? error.message : String(error)}`);
@@ -1480,11 +1568,14 @@ export function createService({ home, log, getPort, fetchImpl, copy = copyToClip
           autoBusy = false;
         }
       };
-      const sec = intervalMs > 0 ? Math.round(intervalMs / 1000) : Number(service.getConfig().web.autoReplyPollSec) || 30;
+      const sec =
+        intervalMs > 0 ? Math.round(intervalMs / 1000) : Number(service.getConfig().web.autoReplyPollSec) || 30;
       const ms = Math.max(10, sec) * 1000;
       autoReplyTimer = setInterval(() => void tick(), ms);
       if (typeof autoReplyTimer === 'object' && autoReplyTimer !== null) autoReplyTimer.unref?.();
-      log.info(`自动回复已启动（每 ${Math.round(ms / 1000)} 秒查一次当前会话；双开关：web.autoReply + web.allowAutoSend）`);
+      log.info(
+        `自动回复已启动（每 ${Math.round(ms / 1000)} 秒查一次当前会话；双开关：web.autoReply + web.allowAutoSend）`,
+      );
     },
 
     /** 停所有定时器/轮询并清菜单。 @returns {Promise<void>} 完成 */

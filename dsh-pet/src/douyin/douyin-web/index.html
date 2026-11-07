@@ -60,7 +60,7 @@
               <button class="btn btn-primary" id="say-send">交给宠物</button>
               <span class="hint" id="say-state"></span>
             </div>
-            <div class="chips" id="say-examples" style="border:0; background:transparent; padding:0"></div>
+            <div class="chips" id="say-examples" style="border: 0; background: transparent; padding: 0"></div>
           </div>
 
           <div class="card">
@@ -96,8 +96,8 @@
               <label>看几帧画面（0 = 只看文案）</label>
               <input class="input" type="number" data-path="behavior.feedLookFrames" min="0" max="6" />
               <p class="tip">
-                播报时截当前这条视频的几张画面给模型看——<b>不下载视频</b>，直接截播放区，
-                所以几十 MB 的视频也只花几张图的代价。文案写得水的时候，靠它才能说清"到底在讲什么"。
+                播报时截当前这条视频的几张画面给模型看——<b>不下载视频</b>，直接截播放区， 所以几十 MB
+                的视频也只花几张图的代价。文案写得水的时候，靠它才能说清"到底在讲什么"。
               </p>
             </div>
             <div class="field">
@@ -115,7 +115,10 @@
           <div class="cards" id="status-cards"></div>
 
           <div class="card">
-            <div class="card-head"><h2>网页通道 · 唯一在用的通路</h2><span class="hint" id="web-hint"></span></div>
+            <div class="card-head">
+              <h2>网页通道 · 唯一在用的通路</h2>
+              <span class="hint" id="web-hint"></span>
+            </div>
             <p class="tip">
               抖音没有能用的官方接口（发布、私信的个人号都不给），所以这里的一切都靠<b>操控一个专用浏览器</b>：
               读会话、写私信、走创作者中心发布（做法是 CDP）。<b>不用手动开</b>：连不上调试端口时插件会按下面的
@@ -129,10 +132,17 @@
               </div>
               <div class="field">
                 <label>专用浏览器（CDP 连不上时自动拉起）</label>
-                <input class="input mono" data-path="web.browserPath" placeholder="C:\Program Files\Citro Labs\ego lite\Application\ego.exe" />
+                <input
+                  class="input mono"
+                  data-path="web.browserPath"
+                  placeholder="C:\Program Files\Citro Labs\ego lite\Application\ego.exe"
+                />
               </div>
             </div>
-            <label class="check"><input type="checkbox" data-path="web.autoLaunch" /> 连不上时自动拉起专用浏览器（独立 profile，不影响日常浏览器）</label>
+            <label class="check"
+              ><input type="checkbox" data-path="web.autoLaunch" /> 连不上时自动拉起专用浏览器（独立
+              profile，不影响日常浏览器）</label
+            >
             <div class="field">
               <label>监听界面（读消息/自动回复在哪里找会话）</label>
               <select class="input" data-path="web.surface">
@@ -146,14 +156,19 @@
               会话名必须<b>精确匹配</b>、写进输入框的文字要<b>读回比对</b>、发完要确认气泡里真的有这条；
               任何一步对不上就中止，而且<b>绝不重试</b>（重试是重复发消息的主要来源）。
             </p>
-            <label class="check"><input type="checkbox" data-path="web.autoPublish" /> 网页发布：填完标题后自动点「发布」</label>
+            <label class="check"
+              ><input type="checkbox" data-path="web.autoPublish" /> 网页发布：填完标题后自动点「发布」</label
+            >
             <p class="tip">
               默认关闭。关着的时候流程走到「上传完 + 标题填好」就停住，<b>由你点最后那个「发布」</b>——
               视频一出去就是公开内容、不可撤销，而封面 / 权限 / 定时发布这些字段还值得看一眼。
               打开后插件会把最后一下也替你按掉，并核对是否出现「发布成功」。
               <br />（上传走的是创作者中心网页，不依赖抖音开放平台，所以不需要绑定账号。）
             </p>
-            <label class="check"><input type="checkbox" data-path="web.autoReply" /> 自动回复（监听当前打开的会话，新消息由大模型现写一条）</label>
+            <label class="check"
+              ><input type="checkbox" data-path="web.autoReply" />
+              自动回复（监听当前打开的会话，新消息由大模型现写一条）</label
+            >
             <div class="grid2">
               <div class="field">
                 <label>轮询间隔（秒，10–600）</label>
@@ -166,13 +181,23 @@
               回复正文<b>只走大模型</b>（harness 里配的默认模型，免 Key），<b>没有模板兜底</b>：
               模型不可用、没配、或没返回正文时就<b>不发</b>，并在日志/审计里写明原因。
             </p>
-            <label class="check"><input type="checkbox" data-path="web.replyGroups" /> 群聊也自动回复（实测电脑端发出的群消息其他成员收不到——平台投递策略；关掉 = 仅单聊自动回复，群聊只监听）</label>
+            <label class="check"
+              ><input type="checkbox" data-path="web.replyGroups" />
+              群聊也自动回复（实测电脑端发出的群消息其他成员收不到——平台投递策略；关掉 =
+              仅单聊自动回复，群聊只监听）</label
+            >
             <div class="field">
               <label>熟人名单（一行一条：<span class="mono">会话名 | 关系 | 备注</span>）</label>
-              <textarea class="input mono" rows="4" data-chips-lines="web.knownPeers" placeholder="阿星 | 主人&#10;小李 | 主人的朋友 | 常来聊游戏"></textarea>
+              <textarea
+                class="input mono"
+                rows="4"
+                data-chips-lines="web.knownPeers"
+                placeholder="阿星 | 主人&#10;小李 | 主人的朋友 | 常来聊游戏"
+              ></textarea>
               <p class="tip">
                 只用来告诉模型<b>现在在跟谁说话</b>：命中主人就说得随意些，命中熟人带上关系和备注，
-                没命中的按<b>陌生网友</b>对待（客气、不多透底）。<b>关系一栏写「主人」就标记主人</b>（写 owner 也认）。<br />
+                没命中的按<b>陌生网友</b>对待（客气、不多透底）。<b>关系一栏写「主人」就标记主人</b>（写 owner
+                也认）。<br />
                 留空 = 一句都不加，回复语气与以前完全一样。这里<b>不是人设</b>——人格与语气仍然只有宠物设置页那一份，
                 本表只影响「对面是谁」这一条事实。名字允许只写一部分（两个字符以上），昵称带表情也能认出来。
               </p>
@@ -197,8 +222,7 @@
               </div>
             </div>
           </div>
-
-                  </section>
+        </section>
 
         <!-- ========== 宠物权限 ========== -->
         <section class="panel" data-panel="grants">
@@ -266,11 +290,17 @@
           </div>
 
           <div class="card">
-            <div class="card-head"><h2>文案模板</h2><span class="hint" id="preview-hint"></span></div>
+            <div class="card-head">
+              <h2>文案模板</h2>
+              <span class="hint" id="preview-hint"></span>
+            </div>
             <div class="field">
               <label>标题</label>
               <input class="input" data-path="caption.titleTemplate" />
-              <p class="tip">变量：<code>{name}</code> <code>{date}</code> <code>{time}</code> <code>{index}</code> <code>{total}</code> <code>{duration}</code> <code>{dir}</code></p>
+              <p class="tip">
+                变量：<code>{name}</code> <code>{date}</code> <code>{time}</code> <code>{index}</code>
+                <code>{total}</code> <code>{duration}</code> <code>{dir}</code>
+              </p>
             </div>
             <div class="field">
               <label>正文</label>
@@ -295,16 +325,27 @@
         <!-- ========== 设置 ========== -->
         <section class="panel" data-panel="settings">
           <div class="card">
-            <div class="card-head"><h2>转码</h2><span class="hint" id="ffmpeg-hint"></span></div>
+            <div class="card-head">
+              <h2>转码</h2>
+              <span class="hint" id="ffmpeg-hint"></span>
+            </div>
             <div class="field">
               <div class="radios">
-                <label class="check"><input type="radio" name="tmode" value="vertical" data-path="transcode.mode" /> 转成竖版 9:16</label>
-                <label class="check"><input type="radio" name="tmode" value="none" data-path="transcode.mode" /> 原样使用源文件</label>
+                <label class="check"
+                  ><input type="radio" name="tmode" value="vertical" data-path="transcode.mode" /> 转成竖版 9:16</label
+                >
+                <label class="check"
+                  ><input type="radio" name="tmode" value="none" data-path="transcode.mode" /> 原样使用源文件</label
+                >
               </div>
             </div>
             <div class="grid2">
-              <div class="field"><label>宽</label><input class="input" type="number" data-path="transcode.width" /></div>
-              <div class="field"><label>高</label><input class="input" type="number" data-path="transcode.height" /></div>
+              <div class="field">
+                <label>宽</label><input class="input" type="number" data-path="transcode.width" />
+              </div>
+              <div class="field">
+                <label>高</label><input class="input" type="number" data-path="transcode.height" />
+              </div>
               <div class="field">
                 <label>横转竖</label>
                 <select class="input" data-path="transcode.fit">
@@ -312,7 +353,9 @@
                   <option value="crop">居中裁切（满屏）</option>
                 </select>
               </div>
-              <div class="field"><label>ffmpeg 路径（留空自动找）</label><input class="input mono" data-path="transcode.ffmpegPath" /></div>
+              <div class="field">
+                <label>ffmpeg 路径（留空自动找）</label><input class="input mono" data-path="transcode.ffmpegPath" />
+              </div>
             </div>
           </div>
 
@@ -320,29 +363,56 @@
             <div class="card-head"><h2>发布节奏</h2></div>
             <div class="field">
               <div class="radios">
-                <label class="check"><input type="radio" name="smode" value="manual" data-path="schedule.mode" /> 只手动</label>
-                <label class="check"><input type="radio" name="smode" value="interval" data-path="schedule.mode" /> 按间隔</label>
-                <label class="check"><input type="radio" name="smode" value="daily" data-path="schedule.mode" /> 每天固定时刻</label>
+                <label class="check"
+                  ><input type="radio" name="smode" value="manual" data-path="schedule.mode" /> 只手动</label
+                >
+                <label class="check"
+                  ><input type="radio" name="smode" value="interval" data-path="schedule.mode" /> 按间隔</label
+                >
+                <label class="check"
+                  ><input type="radio" name="smode" value="daily" data-path="schedule.mode" /> 每天固定时刻</label
+                >
               </div>
             </div>
             <div class="grid2">
-              <div class="field"><label>间隔（分钟）</label><input class="input" type="number" data-path="schedule.intervalMinutes" /></div>
-              <div class="field"><label>每天时刻</label><input class="input" data-path="schedule.dailyTimes" data-list="csv" /></div>
-              <div class="field"><label>每天最多几条</label><input class="input" type="number" data-path="schedule.maxPerDay" /></div>
-              <div class="field"><label>两条最小间隔（分钟）</label><input class="input" type="number" data-path="schedule.minGapMinutes" /></div>
+              <div class="field">
+                <label>间隔（分钟）</label><input class="input" type="number" data-path="schedule.intervalMinutes" />
+              </div>
+              <div class="field">
+                <label>每天时刻</label><input class="input" data-path="schedule.dailyTimes" data-list="csv" />
+              </div>
+              <div class="field">
+                <label>每天最多几条</label><input class="input" type="number" data-path="schedule.maxPerDay" />
+              </div>
+              <div class="field">
+                <label>两条最小间隔（分钟）</label
+                ><input class="input" type="number" data-path="schedule.minGapMinutes" />
+              </div>
             </div>
           </div>
 
           <div class="card">
             <div class="card-head"><h2>账号行为与自主</h2></div>
             <div class="grid2">
-              <div class="field"><label>一次列几条作品</label><input class="input" type="number" data-path="behavior.browseCount" /></div>
-              <div class="field"><label>作品缓存（秒）</label><input class="input" type="number" data-path="behavior.cacheSec" /></div>
-              <div class="field"><label>请求最小间隔（毫秒）</label><input class="input" type="number" data-path="behavior.throttleMs" /></div>
-              <div class="field"><label>自主最小间隔（分钟）</label><input class="input" type="number" data-path="behavior.autonomyIntervalMin" /></div>
+              <div class="field">
+                <label>一次列几条作品</label><input class="input" type="number" data-path="behavior.browseCount" />
+              </div>
+              <div class="field">
+                <label>作品缓存（秒）</label><input class="input" type="number" data-path="behavior.cacheSec" />
+              </div>
+              <div class="field">
+                <label>请求最小间隔（毫秒）</label><input class="input" type="number" data-path="behavior.throttleMs" />
+              </div>
+              <div class="field">
+                <label>自主最小间隔（分钟）</label
+                ><input class="input" type="number" data-path="behavior.autonomyIntervalMin" />
+              </div>
             </div>
             <label class="check"><input type="checkbox" data-path="behavior.recordAudit" /> 记审计</label>
-            <label class="check"><input type="checkbox" data-path="behavior.autonomyEnabled" /> 允许宠物按自己的计划去看两眼（总开关，只读）</label>
+            <label class="check"
+              ><input type="checkbox" data-path="behavior.autonomyEnabled" />
+              允许宠物按自己的计划去看两眼（总开关，只读）</label
+            >
             <div class="field">
               <label>自主允许时段</label>
               <input class="input" data-path="behavior.autonomyWindow" data-list="csv" />
@@ -381,7 +451,10 @@
             <div id="audit-list" class="empty">还没有记录。</div>
           </div>
           <div class="card">
-            <div class="card-head"><h2>日志</h2><span class="hint" id="log-path"></span></div>
+            <div class="card-head">
+              <h2>日志</h2>
+              <span class="hint" id="log-path"></span>
+            </div>
             <pre id="log" class="preview mono small">—</pre>
           </div>
         </section>

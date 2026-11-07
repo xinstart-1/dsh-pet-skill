@@ -22,7 +22,10 @@
  * @returns {Array<{role: string, content: string}>} messages
  */
 export function buildChatMessages({ peer, texts, persona = '' }) {
-  const convo = texts.slice(-8).map((t, i) => `${i + 1}. ${String(t).slice(0, 120)}`).join('\n');
+  const convo = texts
+    .slice(-8)
+    .map((t, i) => `${i + 1}. ${String(t).slice(0, 120)}`)
+    .join('\n');
   return [
     { role: 'system', content: String(persona ?? '') },
     {
@@ -112,13 +115,17 @@ export function createHostLlm({ ctx, sessionId = 'dsh-pet-douyin' }) {
           ? { source: { provider: sel.provider, model: sel.model } }
           : { source: { kind: 'user' } }),
       })),
-      { role: 'user', content: [
+      {
+        role: 'user',
+        content: [
           ...(String(user ?? '') === '' ? [] : [{ type: 'text', text: String(user) }]),
           // 图片块排在文本块之后：提示词先到、像素后到，模型更容易按提示去看图。
           // `attachment` 是附件服务返回的引用（{attachmentId, mediaType, bytes, width, height}），
           // 与 dsh-pet 宿主侧 chat.ts 传图用的是同一种形状。
           ...images.map((attachment) => ({ type: 'image', attachment })),
-        ], source: { kind: 'user' } },
+        ],
+        source: { kind: 'user' },
+      },
     ];
     const parts = [];
     // 推理模型（如 sensenova flash-lite）偶发只吐 reasoning 不吐正文——空正文重试一次，

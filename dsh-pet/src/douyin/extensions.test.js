@@ -24,7 +24,12 @@ test('两种清单形状都能取条目（裸数组 / {extensions}）', () => {
 });
 
 test('upsert 保留别人的条目，并且同 id 只留最新一条', () => {
-  const before = { extensions: [{ id: 'other', api: 'http://127.0.0.1:1/x' }, { id: PLUGIN_ID, api: 'http://127.0.0.1:9/old' }] };
+  const before = {
+    extensions: [
+      { id: 'other', api: 'http://127.0.0.1:1/x' },
+      { id: PLUGIN_ID, api: 'http://127.0.0.1:9/old' },
+    ],
+  };
   const after = upsertSelf(before, { id: PLUGIN_ID, api: 'http://127.0.0.1:9/new' });
   assert.equal(after.extensions.length, 2);
   const other = after.extensions.find((e) => e.id === 'other');

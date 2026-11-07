@@ -17,7 +17,11 @@ test('buildChatMessages：system 用人设，user 里带会话名和最近消息
   const many = buildChatMessages({ peer: 'x', texts: Array.from({ length: 20 }, (_, i) => `m${i}`) });
   assert.ok(!many[1].content.includes('m0 '), '只带最近 8 条');
   assert.ok(many[1].content.includes('m19'));
-  assert.equal(buildChatMessages({ peer: 'x', texts: ['你好'] })[0].content, '', '人设为空不造默认人格（真源在宠物设置页）');
+  assert.equal(
+    buildChatMessages({ peer: 'x', texts: ['你好'] })[0].content,
+    '',
+    '人设为空不造默认人格（真源在宠物设置页）',
+  );
 });
 
 test('stripWrapper：剥一层包裹引号', () => {
@@ -49,7 +53,14 @@ test('createHostLlm：从 text-delta 累积正文，忽略 reasoning-delta；消
     },
   };
   const host = createHostLlm({ ctx });
-  const r = await host.generate({ system: '你是助手', user: '你好', history: [{ role: 'user', content: '早' }, { role: 'assistant', content: '早呀' }] });
+  const r = await host.generate({
+    system: '你是助手',
+    user: '你好',
+    history: [
+      { role: 'user', content: '早' },
+      { role: 'assistant', content: '早呀' },
+    ],
+  });
   assert.equal(r.ok, true);
   assert.equal(r.text, '在的呀');
   assert.equal(r.model, 'aaa/m-1');
@@ -64,9 +75,17 @@ test('createHostLlm：从 text-delta 累积正文，忽略 reasoning-delta；消
     content: [{ type: 'text', text: '你是助手' }],
     source: { kind: 'system-prompt' },
   });
-  assert.deepEqual(opts.messages[1], { role: 'user', content: [{ type: 'text', text: '早' }], source: { kind: 'user' } });
+  assert.deepEqual(opts.messages[1], {
+    role: 'user',
+    content: [{ type: 'text', text: '早' }],
+    source: { kind: 'user' },
+  });
   assert.deepEqual(opts.messages[2].source, { provider: 'aaa', model: 'm-1' });
-  assert.deepEqual(opts.messages[3], { role: 'user', content: [{ type: 'text', text: '你好' }], source: { kind: 'user' } });
+  assert.deepEqual(opts.messages[3], {
+    role: 'user',
+    content: [{ type: 'text', text: '你好' }],
+    source: { kind: 'user' },
+  });
 });
 
 test('createHostLlm：带图时文本在前、图片块在后，且用附件引用而不是裸字节', async () => {
@@ -108,12 +127,18 @@ test('createHostLlm：不带图时消息形状与加图之前完全一致', asyn
 });
 
 test('createHostLlm：没配默认模型如实返回 no-model-selection；流抛错折成 ok:false', async () => {
-  const hostNone = createHostLlm({ ctx: { agentDefaultModel: { currentSelection: () => null }, llm: { stream: async function* () {} } } });
+  const hostNone = createHostLlm({
+    ctx: { agentDefaultModel: { currentSelection: () => null }, llm: { stream: async function* () {} } },
+  });
   assert.deepEqual(await hostNone.generate({ user: 'x' }).then((r) => ({ ok: r.ok })), { ok: false });
   const hostErr = createHostLlm({
     ctx: {
       agentDefaultModel: { currentSelection: () => ({ provider: 'p', model: 'm' }) },
-      llm: { stream: async function* () { throw new Error('boom'); } },
+      llm: {
+        stream: async function* () {
+          throw new Error('boom');
+        },
+      },
     },
   });
   const r = await hostErr.generate({ user: 'x' });

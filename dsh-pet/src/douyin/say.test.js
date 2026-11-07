@@ -179,7 +179,10 @@ test('试一句：宿主没给 llm 时如实失败，绝不吐模板腔', async 
 
 test('试一句：有宿主 llm 时正文原样来自模型（没有模板痕迹）', async () => {
   const { service } = await setup();
-  service.setHostLlm({ generate: async () => ({ ok: true, text: '在的，刚忙完', model: 'stub/m' }), modelLabel: async () => 'stub/m' });
+  service.setHostLlm({
+    generate: async () => ({ ok: true, text: '在的，刚忙完', model: 'stub/m' }),
+    modelLabel: async () => 'stub/m',
+  });
   const r = await service.previewReply({ peer: '星⭐心', text: '在吗' });
   assert.equal(r.ok, true);
   assert.equal(r.text, '在的，刚忙完');

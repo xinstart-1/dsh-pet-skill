@@ -132,7 +132,7 @@ import { parseMenuEvents } from './pet-bridge.js';
 
 test('菜单事件：真实形状 {ok,events} 才认，且只认自己注册的文案', () => {
   const allowed = ['抖音：看我最新作品', '抖音账号设置'];
-  const okShape = { ok: true, events: { '抖音：看我最新作品': 'main', '抖音账号设置': null, '别人的项': 'main' } };
+  const okShape = { ok: true, events: { '抖音：看我最新作品': 'main', 抖音账号设置: null, 别人的项: 'main' } };
   const parsed = parseMenuEvents(okShape, allowed);
   assert.equal(parsed.ok, true);
   assert.deepEqual(parsed.hits, [{ label: '抖音：看我最新作品', pet: 'main' }], 'null 与未注册的项都要丢掉');

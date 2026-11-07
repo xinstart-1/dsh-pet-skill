@@ -10,7 +10,13 @@
  * @module dsh-pet/src/host/chat
  */
 
-import { BlockAssembler, createAssistantMessage, createSystemMessage, createUserMessage, ReasoningEffortId } from '@deepseek-ai/dsh-llm';
+import {
+  BlockAssembler,
+  createAssistantMessage,
+  createSystemMessage,
+  createUserMessage,
+  ReasoningEffortId,
+} from '@deepseek-ai/dsh-llm';
 import type { PetImageRef } from './image-attachment.ts';
 import { PET_CALL_IDENTITY, noTextReason } from './llm-call.ts';
 import { supportsReasoningOff } from './llm-reasoning.ts';

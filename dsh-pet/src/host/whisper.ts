@@ -125,7 +125,9 @@ async function generateWith(
         content: [
           {
             type: 'text',
-            text: [String(hint ?? '').trim(), meme ? userTextWithMeme(meme) : USER_TEXT].filter((s) => s !== '').join('\n'),
+            text: [String(hint ?? '').trim(), meme ? userTextWithMeme(meme) : USER_TEXT]
+              .filter((s) => s !== '')
+              .join('\n'),
           },
         ],
         source: { kind: 'user' },

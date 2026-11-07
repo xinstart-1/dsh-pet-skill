@@ -43,7 +43,12 @@ test('整条链路：扫描识别 → 生成发布包 → 台账去重 → HTTP 
     transcode: { mode: 'none' },
     pack: { outDir: join(home, 'packs'), copyCaption: false, openUploadPage: false },
     pet: { bubble: false, workStatus: false },
-    caption: { titleTemplate: '{name} · {date}', descTemplate: '录于 {date} {time}', tags: ['日常'], visibility: 'public' },
+    caption: {
+      titleTemplate: '{name} · {date}',
+      descTemplate: '录于 {date} {time}',
+      tags: ['日常'],
+      visibility: 'public',
+    },
   });
   assert.equal(saved.ok, true);
   assert.equal(service.getConfig().source.dir, inbox);
@@ -64,13 +69,23 @@ test('整条链路：扫描识别 → 生成发布包 → 台账去重 → HTTP 
     assert.equal(r.ok, true, `准备失败：${r.reason}`);
     pack = r.pack;
     assert.equal(pack.video.transcoded, false, '没 ffmpeg 时不该声称转码成功');
-    assert.ok(pack.warnings.some((w) => w.includes('ffmpeg')), '应当在包里写明缺 ffmpeg');
+    assert.ok(
+      pack.warnings.some((w) => w.includes('ffmpeg')),
+      '应当在包里写明缺 ffmpeg',
+    );
     assert.equal(pack.caption.title.startsWith('海边 日落 · '), true, '标题模板变量被替换');
   });
 
   await t.test('发布包：四个文件齐了，文案只有文案本身', async () => {
     const files = ['文案.txt', 'meta.json', '说明.txt'];
-    for (const f of files) assert.ok(await stat(join(pack.dir, f)).then(() => true, () => false), `缺 ${f}`);
+    for (const f of files)
+      assert.ok(
+        await stat(join(pack.dir, f)).then(
+          () => true,
+          () => false,
+        ),
+        `缺 ${f}`,
+      );
     const caption = await readFile(join(pack.dir, '文案.txt'), 'utf8');
     assert.equal(caption.trim(), pack.caption.text.trim(), '文案.txt 必须等于成品文案');
     assert.ok(caption.includes('#日常'), '话题进了文案');
@@ -115,7 +130,10 @@ test('整条链路：扫描识别 → 生成发布包 → 台账去重 → HTTP 
     const preview = await fetch(`${base}/api/caption-preview`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ caption: { titleTemplate: '改一下 {name}', tags: ['测试'], visibility: 'private' }, name: '样例' }),
+      body: JSON.stringify({
+        caption: { titleTemplate: '改一下 {name}', tags: ['测试'], visibility: 'private' },
+        name: '样例',
+      }),
     }).then((r) => r.json());
     assert.equal(preview.title, '改一下 样例', '预览用未保存的覆盖值');
     assert.equal(preview.visibility, '仅自己');
@@ -136,7 +154,10 @@ test('配置：保存非法值会被纠正但整体仍可用', async () => {
   const home = await mkdtemp(join(tmpdir(), 'dsh-pet-douyin-cfg-'));
   const service = createService({ home, log: silentLog, getPort: () => 0 });
   await service.init();
-  const r = await service.saveConfig({ schedule: { mode: 'daily', dailyTimes: ['25:00', '09:00'], weekdays: [0, 3] }, source: { dir: '~/videos' } });
+  const r = await service.saveConfig({
+    schedule: { mode: 'daily', dailyTimes: ['25:00', '09:00'], weekdays: [0, 3] },
+    source: { dir: '~/videos' },
+  });
   assert.equal(r.ok, true);
   const cfg = service.getConfig();
   assert.deepEqual(cfg.schedule.dailyTimes, ['09:00'], '非法时刻被丢掉');

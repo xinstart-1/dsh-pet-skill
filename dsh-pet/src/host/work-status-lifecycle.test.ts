@@ -76,7 +76,12 @@ function setup(): Harness {
       if (name === 'session/event') listeners.push(cb);
       return noop;
     },
-    webServer: { register: (spec: { path?: string; handler: typeof handler }) => { if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler; return noop; } },
+    webServer: {
+      register: (spec: { path?: string; handler: typeof handler }) => {
+        if (spec.path === undefined || spec.path === '/dsh-pet-7340') handler = spec.handler;
+        return noop;
+      },
+    },
     commands: { register: () => noop },
     logger: { warn: () => {}, info: () => {}, debug: () => {}, error: () => {} },
     agentDefaultModel: { currentSelection: () => undefined },

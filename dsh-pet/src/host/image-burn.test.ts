@@ -18,7 +18,10 @@ function makeSink(shape: Record<string, unknown>): { sink: Record<string, unknow
   const calls: string[] = [];
   const sink: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(shape)) {
-    sink[k] = typeof v === 'function' ? (...args: unknown[]) => (calls.push(String(k)), (v as (...a: unknown[]) => unknown)(...args)) : v;
+    sink[k] =
+      typeof v === 'function'
+        ? (...args: unknown[]) => (calls.push(String(k)), (v as (...a: unknown[]) => unknown)(...args))
+        : v;
   }
   return { sink, calls };
 }
@@ -68,13 +71,9 @@ describe('burnImage', () => {
   });
 
   test('unlink 失败 / 取不到路径 / 服务缺失 → 都返回 burned:false 且不抛', () => {
-    const unlinkThrow = burnImage(
-      makeSink({ imageHostPath: () => 'C:/tmp/att-1' }).sink,
-      REF,
-      () => {
-        throw new Error('EPERM');
-      },
-    );
+    const unlinkThrow = burnImage(makeSink({ imageHostPath: () => 'C:/tmp/att-1' }).sink, REF, () => {
+      throw new Error('EPERM');
+    });
     assert.equal(unlinkThrow.burned, false);
     assert.match(String(unlinkThrow.detail), /EPERM/);
 

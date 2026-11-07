@@ -75,7 +75,6 @@ const PAGE_HELPERS = `
     return out;
   };`;
 
-
 /**
  * 网页通道。
  * @param {{getConfig: () => any, log: any, home: string, spawnImpl?: any}} deps 依赖
@@ -100,7 +99,12 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
   /** @returns {{enabled: boolean, port: number, allowSend: boolean, surface: 'chat'|'panel'}} 当前设置 */
   function opts() {
     const web = getConfig().web ?? {};
-    return { enabled: web.enabled !== false, port: Number(web.port) || 9333, allowSend: web.allowAutoSend === true, surface: web.surface === 'panel' ? 'panel' : 'chat' };
+    return {
+      enabled: web.enabled !== false,
+      port: Number(web.port) || 9333,
+      allowSend: web.allowAutoSend === true,
+      surface: web.surface === 'panel' ? 'panel' : 'chat',
+    };
   }
 
   /** @returns {string} CDP 根地址 */
@@ -196,13 +200,20 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
     const exe = String(w.browserPath ?? '').trim();
     if (exe === '') return { ok: false, reason: '没配置浏览器路径（web.browserPath）' };
     if (!existsSync(exe)) return { ok: false, reason: `浏览器不存在：${exe}` };
-    const profile = String(getConfig().web?.profileDir ?? '').trim() || join(home || process.cwd(), 'dsh-pet-douyin-web', 'profile');
+    const profile =
+      String(getConfig().web?.profileDir ?? '').trim() || join(home || process.cwd(), 'dsh-pet-douyin-web', 'profile');
     // panel 模式起始页用精选流（消息面板哪里都能开，没必要落在聊天页）
     const startUrl = opts().surface === 'panel' ? 'https://www.douyin.com/jingxuan' : 'https://www.douyin.com/chat';
     try {
       spawnImpl(
         exe,
-        [`--remote-debugging-port=${opts().port}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', startUrl],
+        [
+          `--remote-debugging-port=${opts().port}`,
+          `--user-data-dir=${profile}`,
+          '--no-first-run',
+          '--no-default-browser-check',
+          startUrl,
+        ],
         { detached: true, stdio: 'ignore' },
       ).unref();
     } catch (error) {
@@ -283,7 +294,8 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
    * @returns {Promise<{ok: boolean, items?: Array<{name: string, last: string}>, reason?: string, reused?: boolean}>} 结果
    */
   async function listChats() {
-    if (!(await ensureBrowser())) return { ok: false, reason: `连不上网页通道（127.0.0.1:${opts().port}），自动拉起也没成功` };
+    if (!(await ensureBrowser()))
+      return { ok: false, reason: `连不上网页通道（127.0.0.1:${opts().port}），自动拉起也没成功` };
 
     const expr = `(() => {
       ${PAGE_HELPERS}
@@ -291,9 +303,10 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
     })()`;
 
     const reuse = await pages();
-    const open = opts().surface === 'panel'
-      ? reuse.find((t) => /(^|\.)douyin\.com/.test(safeHost(t.url)))
-      : reuse.find((t) => t.url.includes('/chat'));
+    const open =
+      opts().surface === 'panel'
+        ? reuse.find((t) => /(^|\.)douyin\.com/.test(safeHost(t.url)))
+        : reuse.find((t) => t.url.includes('/chat'));
     if (open !== undefined) {
       try {
         return { ok: true, items: JSON.parse(await evaluate(open.webSocketDebuggerUrl, expr)), reused: true };
@@ -665,9 +678,21 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
    * @returns {Promise<void>} 完成
    */
   async function clickAt(page, x, y) {
-    await cdp(page.webSocketDebuggerUrl, 'Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+    await cdp(page.webSocketDebuggerUrl, 'Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x,
+      y,
+      button: 'left',
+      clickCount: 1,
+    });
     await new Promise((r) => setTimeout(r, 40));
-    await cdp(page.webSocketDebuggerUrl, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+    await cdp(page.webSocketDebuggerUrl, 'Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x,
+      y,
+      button: 'left',
+      clickCount: 1,
+    });
   }
 
   /**
@@ -736,8 +761,20 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
       if (n === 0) return true;
       const times = Math.min(n + 5, 400);
       for (let i = 0; i < times; i += 1) {
-        await cdp(page.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
-        await cdp(page.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
+        await cdp(page.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Backspace',
+          code: 'Backspace',
+          windowsVirtualKeyCode: 8,
+          nativeVirtualKeyCode: 8,
+        });
+        await cdp(page.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Backspace',
+          code: 'Backspace',
+          windowsVirtualKeyCode: 8,
+          nativeVirtualKeyCode: 8,
+        });
       }
       await sleep(300);
     }
@@ -834,7 +871,10 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
       panelMissCount = panelMissKey === key ? panelMissCount + 1 : 1;
       panelMissKey = key;
       panelMissAt = Date.now();
-      const tail = panelMissCount >= 2 ? '，这个页面不再尝试（换页面或手动点开侧栏后恢复）' : `，${PANEL_RETRY_MS / 1000}s 后再试一次`;
+      const tail =
+        panelMissCount >= 2
+          ? '，这个页面不再尝试（换页面或手动点开侧栏后恢复）'
+          : `，${PANEL_RETRY_MS / 1000}s 后再试一次`;
       log?.warn?.(`面板模式：${why}${tail}（${key.slice(0, 60)}）`);
       return null;
     };
@@ -847,14 +887,19 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
     const entry = probe?.entry ?? null;
     // 找不到「消息」入口 = 这个页面压根没有侧栏（创作者中心、作品详情页等），点也没用
     if (entry === null) {
-      return miss(probe?.hidden > 0 ? '侧栏是折叠的（会话项 DOM 在、尺寸为 0）但找不到「消息」入口' : '当前页没有「消息」入口');
+      return miss(
+        probe?.hidden > 0 ? '侧栏是折叠的（会话项 DOM 在、尺寸为 0）但找不到「消息」入口' : '当前页没有「消息」入口',
+      );
     }
 
     // 只点一次、等 3 秒看结果。原来点 3 次是"多点几次总能开"的赌法，
     // 代价是失败时页面被连点 3 下——比开不出来更难受。
     await clickAt(page, entry.x, entry.y);
     await sleep(3000);
-    const after = await evalJson(page, `(() => { ${PAGE_HELPERS} return JSON.stringify({ items: convItems().length }); })()`);
+    const after = await evalJson(
+      page,
+      `(() => { ${PAGE_HELPERS} return JSON.stringify({ items: convItems().length }); })()`,
+    );
     if (after !== null && after.items > 0) {
       panelMissAt = 0;
       panelMissKey = '';
@@ -973,7 +1018,9 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
       if (peer === null || String(peer.peer ?? '') === '') {
         return { ok: false, reason: '面板里没有打开的会话（在「消息」面板里点开一个会话后才会监听）' };
       }
-      target = String(peer.peer).replace(/\(\d+\)\s*$/, '').trim();
+      target = String(peer.peer)
+        .replace(/\(\d+\)\s*$/, '')
+        .trim();
       isGroup = peer.group === true;
     } else {
       const peer = await evalJson(
@@ -1372,7 +1419,11 @@ export function createWebChan({ getConfig, log, home = '', spawnImpl = spawn }) 
 
     const frames = [];
     for (let i = 0; i < want; i += 1) {
-      const shot = await cdp(page.webSocketDebuggerUrl, 'Page.captureScreenshot', { format: 'jpeg', quality: 72, clip }).catch(() => null);
+      const shot = await cdp(page.webSocketDebuggerUrl, 'Page.captureScreenshot', {
+        format: 'jpeg',
+        quality: 72,
+        clip,
+      }).catch(() => null);
       if (shot === null || typeof shot.data !== 'string' || shot.data === '') break;
       const data = Buffer.from(shot.data, 'base64');
       frames.push({

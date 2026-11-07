@@ -188,7 +188,10 @@ export function createDesktopSpawn(deps: DesktopSpawnInput) {
           runtimeStatus?.endElectronDownload(true);
           launchHelper(path);
         } else {
-          runtimeStatus?.endElectronDownload(false, '下载失败（见 logs.txt 的 ensure failed 一行；常见原因是网络或镜像不可达）');
+          runtimeStatus?.endElectronDownload(
+            false,
+            '下载失败（见 logs.txt 的 ensure failed 一行；常见原因是网络或镜像不可达）',
+          );
           log.warn(
             '[dsh-pet] Electron download failed; desktop pet unavailable. Set DSH_PET_ELECTRON_PATH and restart, or retry later.',
           );

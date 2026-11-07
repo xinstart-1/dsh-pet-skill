@@ -69,7 +69,8 @@ export function createLedger({ file, log }) {
                     lastRunAt: Number(raw.schedule.lastRunAt) || 0,
                     dayKey: typeof raw.schedule.dayKey === 'string' ? raw.schedule.dayKey : '',
                     dayCount: Number(raw.schedule.dayCount) || 0,
-                    fired: raw.schedule.fired !== null && typeof raw.schedule.fired === 'object' ? raw.schedule.fired : {},
+                    fired:
+                      raw.schedule.fired !== null && typeof raw.schedule.fired === 'object' ? raw.schedule.fired : {},
                   }
                 : emptyLedger().schedule,
           };

@@ -6,7 +6,16 @@
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { digestOf, formatDuration, formatLikes, likesOf, parseRecommend, parseRecommendList, shareTextOf, topByLikes } from './feed.js';
+import {
+  digestOf,
+  formatDuration,
+  formatLikes,
+  likesOf,
+  parseRecommend,
+  parseRecommendList,
+  shareTextOf,
+  topByLikes,
+} from './feed.js';
 
 // 真实抓取记录：一条完整的（含 caption / item_title），两条只有 desc 的
 const REAL = [
@@ -102,13 +111,19 @@ test('没有 data-e2e-vid 的直接丢掉（拼不出链接，报出去也没用
 test('按 id 去重：翻页瞬间的重复快照只留一次', () => {
   const items = parseRecommendList([REAL[0], REAL[1], REAL[0], { id: '' }]);
   assert.equal(items.length, 2);
-  assert.deepEqual(items.map((i) => i.id), [REAL[0].id, REAL[1].id]);
+  assert.deepEqual(
+    items.map((i) => i.id),
+    [REAL[0].id, REAL[1].id],
+  );
 });
 
 test('挑最热：按点赞数值降序，读不出点赞的排后面', () => {
   const items = parseRecommendList([...REAL, { id: '999', desc: '无点赞的一条' }]);
   const top = topByLikes(items, 2);
-  assert.deepEqual(top.map((i) => i.likes), ['88.3万', '7.9万']);
+  assert.deepEqual(
+    top.map((i) => i.likes),
+    ['88.3万', '7.9万'],
+  );
   assert.equal(topByLikes(items, 9)[3].id, '999', '读不出点赞的不会被丢掉，只是排最后');
 });
 
@@ -124,14 +139,14 @@ test('分享文案：作者 + 《标题》 + 单条链接，话题标签要剥�
 test('分享文案：标题自带书名号时不再套一层', () => {
   const text = shareTextOf(parseRecommend(REAL[0]));
   assert.match(text, /《太公在此》/);
-  assert.doesNotMatch(text, /《《/, "标题自带《》时不许再套一层");
+  assert.doesNotMatch(text, /《《/, '标题自带《》时不许再套一层');
 });
 
 test('气泡播报：短、去话题、带点赞、超出用条数收尾', () => {
   const d = digestOf(parseRecommendList(REAL), { max: 2 });
   assert.match(d, /^刷了会儿抖音，挑2条给你：/);
   assert.equal(d.split('\n').length, 4);
-  assert.match(d, /1\. @AI\.814 /, "88.3万赞那条最热，排第一");
+  assert.match(d, /1\. @AI\.814 /, '88.3万赞那条最热，排第一');
   assert.doesNotMatch(d, /#剑网3苍生铸世/);
   assert.match(d, /一共刷到 3 条/);
 });

@@ -52,7 +52,9 @@ export interface BrowserTarget {
 export function pickByVisibility(
   pages: readonly { title: string; url: string; visible: boolean }[],
 ): { title: string; url: string } | null {
-  const hit = (Array.isArray(pages) ? pages : []).find((p) => p?.visible === true && /^https?:/i.test(String(p.url ?? '')));
+  const hit = (Array.isArray(pages) ? pages : []).find(
+    (p) => p?.visible === true && /^https?:/i.test(String(p.url ?? '')),
+  );
   return hit === undefined ? null : { title: String(hit.title ?? '').trim(), url: String(hit.url ?? '').trim() };
 }
 
@@ -433,7 +435,7 @@ export function describeWindows(windows: readonly WindowInfo[]): string {
   return `桌面上开着${parts.join('、')}`;
 }
 
-/** 最近一拍快照（模块级缓存，只活这一拍，不落盘）。 */let lastSample: AwarenessSample | null = null;
+/** 最近一拍快照（模块级缓存，只活这一拍，不落盘）。 */ let lastSample: AwarenessSample | null = null;
 
 /** 记下这一拍的快照（采集循环调用；传 null 表示清空）。 */
 export function rememberAwareness(sample: AwarenessSample | null): void {
@@ -481,7 +483,10 @@ export async function collectAwareness(opts: CollectOptions): Promise<AwarenessS
     if (Array.isArray(list) && list.length > 0) sample.windows = list;
   }
   const hasAny =
-    sample.browser !== undefined || sample.windows !== undefined || sample.windowTitle !== undefined || sample.idleSec !== undefined;
+    sample.browser !== undefined ||
+    sample.windows !== undefined ||
+    sample.windowTitle !== undefined ||
+    sample.idleSec !== undefined;
   return hasAny ? sample : null;
 }
 

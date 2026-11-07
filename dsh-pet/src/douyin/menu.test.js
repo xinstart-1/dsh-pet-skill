@@ -31,7 +31,9 @@ test('真点击：events 里是字符串 petId', () => {
 });
 
 test('不在白名单的 label 一律丢弃（别人 owner 的项、误解析出的键）', () => {
-  const r = parseMenuEvents({ ok: true, events: { reason: 'unknown-owner', message: 'xxx', 分享到抖音: 'main' } }, ['分享到抖音']);
+  const r = parseMenuEvents({ ok: true, events: { reason: 'unknown-owner', message: 'xxx', 分享到抖音: 'main' } }, [
+    '分享到抖音',
+  ]);
   assert.deepEqual(r.hits, [{ label: '分享到抖音', pet: 'main' }]);
 });
 
