@@ -73,7 +73,7 @@ info:
 
 externalDocs:
   description: 项目仓库与使用说明
-  url: https://github.com/xinstart-1/dsh-pet-skills
+  url: https://github.com/xinstart-1/dsh-pet-skill
 
 servers:
   - url: http://127.0.0.1:{port}

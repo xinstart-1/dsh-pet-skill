@@ -47,7 +47,7 @@ python encode_thumbs.py      # 转码 640×360 播放变体 → step04/
 
 插件默认只发布 `.webm`（VP9-alpha），Safari/WKWebView 不认 webm alpha（黑底），macOS 需要在 GitHub Release 下载官方转码的 **HEVC-with-Alpha `.mov`** 素材使用，两步：
 
-1. **下载**：<https://github.com/xinstart-1/dsh-pet-skills/releases/tag/assets-mov>（固定 tag，保持最新；zip 解压后文件名与 webm 一一对应）
+1. **下载**：<https://github.com/xinstart-1/dsh-pet-skill/releases/tag/assets-mov>（固定 tag，保持最新；zip 解压后文件名与 webm 一一对应）
 2. **放入**：`.mov` 文件放进 `$DSH_HOME/dsh-pet/main-animation/mov/`（pet pack 宠物则是 `pet/<种类名>-animation/mov/`）
 
 ## ③ 动画 → 插件

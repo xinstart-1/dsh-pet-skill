@@ -14,14 +14,14 @@
     "cordis",
     "react"
   ],
-  "homepage": "https://github.com/xinstart-1/dsh-pet-skills#readme",
+  "homepage": "https://github.com/xinstart-1/dsh-pet-skill#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xinstart-1/dsh-pet-skills.git",
+    "url": "git+https://github.com/xinstart-1/dsh-pet-skill.git",
     "directory": "dsh-pet"
   },
   "bugs": {
-    "url": "https://github.com/xinstart-1/dsh-pet-skills/issues"
+    "url": "https://github.com/xinstart-1/dsh-pet-skill/issues"
   },
   "_comment": [
     "=============== dsh-pet-skill 包清单说明 ===============",
